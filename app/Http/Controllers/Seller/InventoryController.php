@@ -172,7 +172,8 @@ class InventoryController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            $existing = $request->route('product')?->image_path;
+            $routeProduct = $request->route('product');
+            $existing = $routeProduct instanceof Product ? $routeProduct->image_path : null;
 
             $attributes['image_path'] = $request->file('image')->store('products', 'public');
 
