@@ -20,6 +20,11 @@ export default function SellerLayout({
 
     const nav: NavItem[] = [
         {
+            href: '/dashboard',
+            label: 'Dashboard',
+            current: path === '/dashboard',
+        },
+        {
             href: '/inventory',
             label: 'Inventory',
             current: path.startsWith('/inventory'),
