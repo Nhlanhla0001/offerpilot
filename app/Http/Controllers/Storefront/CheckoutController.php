@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\Quote;
+use App\Notifications\OrderPaid;
 use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -146,6 +147,8 @@ class CheckoutController extends Controller
             $order->quote->update(['status' => 'fulfilled']);
 
             $order->quote->product->decrement('stock_quantity');
+
+            $order->merchant?->owner?->notify(new OrderPaid($order));
         });
 
         return response()->json([
