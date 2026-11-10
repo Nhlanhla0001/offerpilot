@@ -128,7 +128,8 @@ test('captures an approved order', function () {
 
     expect($capture['status'])->toBe('COMPLETED');
 
-    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/v2/checkout/orders/PAYPAL-ORDER-TEST/capture'));
+    Http::assertSent(fn (Request $request) => str_ends_with($request->url(), '/v2/checkout/orders/PAYPAL-ORDER-TEST/capture')
+        && str_contains((string) ($request->header('Content-Type')[0] ?? ''), 'application/json'));
 });
 
 test('fails loudly when PayPal credentials are missing', function () {

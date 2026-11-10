@@ -28,6 +28,7 @@ type PayPalButtonsConfig = {
     style?: Record<string, string>;
     createOrder: () => Promise<string>;
     onApprove: (data: { orderID: string }) => Promise<void>;
+    onError?: (error: unknown) => void;
 };
 
 type PayPalSdk = {
@@ -155,13 +156,28 @@ export default function StoreShow({
                         return data.paypalOrderId;
                     },
                     onApprove: async (data) => {
-                        const result = await postJson<{
-                            status: string;
-                            captureId: string | null;
-                            amount: string;
-                        }>(capture().url, { paypal_order_id: data.orderID });
+                        try {
+                            const result = await postJson<{
+                                status: string;
+                                captureId: string | null;
+                                amount: string;
+                            }>(capture().url, { paypal_order_id: data.orderID });
 
-                        setPaid({ captureId: result.captureId, amount: result.amount });
+                            setPaid({ captureId: result.captureId, amount: result.amount });
+                        } catch (exception) {
+                            setError(
+                                exception instanceof Error
+                                    ? exception.message
+                                    : 'Payment could not be verified.',
+                            );
+                        }
+                    },
+                    onError: (exception) => {
+                        setError(
+                            exception instanceof Error
+                                ? exception.message
+                                : 'PayPal reported an error.',
+                        );
                     },
                 })
                 .render('#paypal-buttons');
@@ -283,7 +299,7 @@ export default function StoreShow({
 
                             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-                            {quote && !paid && (
+                            {quote && (
                                 <div className="mt-5 rounded-md border border-[#19140014] p-4 dark:border-[#3E3E3A]">
                                     <p className="text-sm font-medium">
                                         Quote held at ${quote.price}
@@ -291,7 +307,10 @@ export default function StoreShow({
                                     <p className="mt-1 text-xs text-[#706f6c] dark:text-[#A1A09A]">
                                         Valid for 15 minutes. Pay with PayPal Sandbox to settle it.
                                     </p>
-                                    <div id="paypal-buttons" className="mt-3" />
+                                    <div
+                                        id="paypal-buttons"
+                                        className={paid ? 'hidden' : 'mt-3'}
+                                    />
                                 </div>
                             )}
 

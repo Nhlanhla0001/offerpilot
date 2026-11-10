@@ -88,7 +88,11 @@ final class PayPalService
     {
         return $this->request()
             ->withToken($this->accessToken())
-            ->post($this->baseUrl().'/v2/checkout/orders/'.rawurlencode($paypalOrderId).'/capture')
+            ->asJson()
+            ->post(
+                $this->baseUrl().'/v2/checkout/orders/'.rawurlencode($paypalOrderId).'/capture',
+                (object) [],
+            )
             ->throw()
             ->json() ?? [];
     }
