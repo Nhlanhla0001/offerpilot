@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Seller;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,14 +15,28 @@ class OrdersController extends Controller
     /**
      * List the merchant's orders. Only verified captures count as sales.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $merchant = $request->user()->merchant;
 
-        abort_if($merchant === null, 403);
+        if ($merchant === null) {
+            return redirect()->route('store.index');
+        }
+
+        $search = trim($request->string('q')->toString());
 
         $orders = Order::query()
             ->where('merchant_id', $merchant->id)
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($inner) use ($search): void {
+                    $term = '%'.$search.'%';
+
+                    $inner->where('order_number', 'like', $term)
+                        ->orWhere('customer_name', 'like', $term)
+                        ->orWhere('customer_email', 'like', $term)
+                        ->orWhere('paypal_capture_id', 'like', $term);
+                });
+            })
             ->withCount('items')
             ->orderByDesc('id')
             ->limit(50)
@@ -45,6 +60,7 @@ class OrdersController extends Controller
         return Inertia::render('orders/index', [
             'merchantName' => $merchant->name,
             'orders' => $orders,
+            'filters' => ['q' => $search],
             'summary' => [
                 'paid_count' => (clone $paid)->count(),
                 'revenue' => number_format((int) (clone $paid)->sum('amount_cents') / 100, 2, '.', ','),

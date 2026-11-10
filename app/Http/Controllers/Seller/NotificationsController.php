@@ -18,7 +18,7 @@ class NotificationsController extends Controller
         $user = $request->user();
 
         if ($user->merchant === null) {
-            return redirect()->route('inventory.index');
+            return redirect()->route('store.index');
         }
 
         $notifications = $user->notifications()

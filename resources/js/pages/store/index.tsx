@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import CartDrawer from '@/components/store/cart-drawer';
@@ -35,6 +35,10 @@ export default function StoreIndex({
     products: Product[];
     categories: string[];
 }) {
+    const { auth, role } = usePage().props as {
+        auth?: { user?: { name: string | null } | null };
+        role?: string;
+    };
     const [category, setCategory] = useState<string>('All');
     const [query, setQuery] = useState('');
 
@@ -88,12 +92,32 @@ export default function StoreIndex({
                         <nav className="flex items-center gap-2 text-sm sm:gap-4">
                             <ThemeToggle className="size-11 md:size-9" />
                             <CartDrawer />
-                            <Link
-                                href="/login"
-                                className="flex h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                            >
-                                Sign in
-                            </Link>
+                            {role === 'seller' ? (
+                                <Link
+                                    href="/dashboard"
+                                    className="flex h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                                >
+                                    <span className="hidden sm:inline">
+                                        Seller workspace
+                                    </span>
+                                    <span className="sm:hidden">Seller</span>
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/inventory"
+                                    className="hidden h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline sm:flex"
+                                >
+                                    Sell on OfferPilot
+                                </Link>
+                            )}
+                            {!auth?.user && (
+                                <Link
+                                    href="/login"
+                                    className="flex h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                                >
+                                    Sign in
+                                </Link>
+                            )}
                         </nav>
                     </div>
                 </header>

@@ -1,5 +1,8 @@
-import { BadgeCheck, ReceiptText } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { BadgeCheck, ReceiptText, SearchX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import SearchField from '@/components/search-field';
 import SellerLayout from '@/layouts/seller-layout';
 
 type Order = {
@@ -17,6 +20,7 @@ type Order = {
 export default function OrdersIndex({
     orders,
     summary,
+    filters,
 }: {
     merchantName: string;
     orders: Order[];
@@ -26,7 +30,10 @@ export default function OrdersIndex({
         inventory_count: number;
         low_stock: number;
     };
+    filters: { q: string };
 }) {
+    const searching = filters.q !== '';
+
     const description =
         summary.paid_count === 0
             ? 'No payments captured yet. An order appears here the moment PayPal confirms it.'
@@ -34,7 +41,7 @@ export default function OrdersIndex({
 
     return (
         <SellerLayout title="Orders" description={description}>
-            {orders.length === 0 ? (
+            {orders.length === 0 && !searching ? (
                 <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
                     <ReceiptText
                         aria-hidden="true"
@@ -49,93 +56,130 @@ export default function OrdersIndex({
                 </div>
             ) : (
                 <section className="overflow-hidden rounded-lg border border-border bg-card">
-                    <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-                        <h2 className="text-sm font-semibold">All orders</h2>
-                        <p className="text-xs text-muted-foreground tabular-nums">
-                            {orders.length}{' '}
-                            {orders.length === 1 ? 'order' : 'orders'}
-                        </p>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+                        <div className="flex items-baseline gap-2">
+                            <h2 className="text-sm font-semibold">
+                                All orders
+                            </h2>
+                            <p className="text-xs text-muted-foreground tabular-nums">
+                                {orders.length}{' '}
+                                {orders.length === 1 ? 'order' : 'orders'}
+                                {searching ? ' matching' : ''}
+                            </p>
+                        </div>
+
+                        <SearchField
+                            url="/orders"
+                            value={filters.q}
+                            placeholder="Order, customer, capture"
+                            label="Search orders"
+                        />
                     </div>
 
-                    <div className="w-full overflow-x-auto contain-paint">
-                        <table className="w-full text-sm">
-                            <thead className="bg-surface text-left text-xs tracking-wide text-muted-foreground uppercase">
-                                <tr>
-                                    <th className="px-5 py-3 font-medium">
-                                        Order
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Customer
-                                    </th>
-                                    <th className="px-4 py-3 text-right font-medium">
-                                        Items
-                                    </th>
-                                    <th className="px-4 py-3 text-right font-medium">
-                                        Total
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Payment
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Capture
-                                    </th>
-                                    <th className="px-5 py-3 font-medium">
-                                        Placed
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {orders.map((order) => (
-                                    <tr
-                                        key={order.order_number}
-                                        className="transition-colors hover:bg-surface"
-                                    >
-                                        <td className="px-5 py-3 font-medium tabular-nums">
-                                            {order.order_number}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {order.customer ?? '—'}
-                                            {order.email && (
-                                                <span className="mt-0.5 block text-xs text-muted-foreground">
-                                                    {order.email}
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-right tabular-nums">
-                                            {order.items}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-medium tabular-nums">
-                                            ${order.total}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {order.paid ? (
-                                                <Badge className="gap-1 border-brand/25 bg-brand/10 text-brand-strong">
-                                                    <BadgeCheck
-                                                        aria-hidden="true"
-                                                        className="size-3"
-                                                    />
-                                                    Paid
-                                                </Badge>
-                                            ) : (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="capitalize"
-                                                >
-                                                    {order.status}
-                                                </Badge>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums">
-                                            {order.capture_id ?? '—'}
-                                        </td>
-                                        <td className="px-5 py-3 text-xs text-muted-foreground">
-                                            {order.placed_at ?? '—'}
-                                        </td>
+                    {orders.length === 0 ? (
+                        <div className="px-6 py-12 text-center">
+                            <SearchX
+                                aria-hidden="true"
+                                className="mx-auto size-8 text-muted-foreground"
+                            />
+                            <p className="mt-3 text-sm font-medium">
+                                No orders match “{filters.q}”
+                            </p>
+                            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                                Search by order number, customer name, email or
+                                capture reference.
+                            </p>
+                            <Button
+                                asChild
+                                variant="outline"
+                                className="mt-5 h-11"
+                            >
+                                <Link href="/orders">Clear search</Link>
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="w-full overflow-x-auto contain-paint">
+                            <table className="w-full text-sm">
+                                <thead className="bg-surface text-left text-xs tracking-wide text-muted-foreground uppercase">
+                                    <tr>
+                                        <th className="px-5 py-3 font-medium">
+                                            Order
+                                        </th>
+                                        <th className="px-4 py-3 font-medium">
+                                            Customer
+                                        </th>
+                                        <th className="px-4 py-3 text-right font-medium">
+                                            Items
+                                        </th>
+                                        <th className="px-4 py-3 text-right font-medium">
+                                            Total
+                                        </th>
+                                        <th className="px-4 py-3 font-medium">
+                                            Payment
+                                        </th>
+                                        <th className="px-4 py-3 font-medium">
+                                            Capture
+                                        </th>
+                                        <th className="px-5 py-3 font-medium">
+                                            Placed
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {orders.map((order) => (
+                                        <tr
+                                            key={order.order_number}
+                                            className="transition-colors hover:bg-surface"
+                                        >
+                                            <td className="px-5 py-3 font-medium tabular-nums">
+                                                {order.order_number}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {order.customer ?? '—'}
+                                                {order.email && (
+                                                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                                                        {order.email}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-right tabular-nums">
+                                                {order.items > 0
+                                                    ? order.items
+                                                    : '—'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium tabular-nums">
+                                                ${order.total}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {order.paid ? (
+                                                    <Badge className="gap-1 border-brand/25 bg-brand/10 text-brand-strong">
+                                                        <BadgeCheck
+                                                            aria-hidden="true"
+                                                            className="size-3"
+                                                        />
+                                                        Paid
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="capitalize"
+                                                    >
+                                                        {order.status}
+                                                    </Badge>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums">
+                                                {order.capture_id ?? '—'}
+                                            </td>
+                                            <td className="px-5 py-3 text-xs text-muted-foreground">
+                                                {order.placed_at ?? '—'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </section>
             )}
         </SellerLayout>

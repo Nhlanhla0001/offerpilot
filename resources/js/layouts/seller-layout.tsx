@@ -141,8 +141,13 @@ export default function SellerLayout({
                                             OP
                                         </span>
                                         <span className="grid min-w-0 flex-1 leading-tight group-data-[collapsible=icon]:hidden">
-                                            <span className="truncate text-sm font-semibold">
-                                                OfferPilot
+                                            <span className="flex items-center gap-2">
+                                                <span className="truncate text-sm font-semibold">
+                                                    OfferPilot
+                                                </span>
+                                                <span className="rounded border border-sidebar-border px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                                                    Seller
+                                                </span>
                                             </span>
                                             <span className="truncate text-xs text-muted-foreground">
                                                 {merchantName ??

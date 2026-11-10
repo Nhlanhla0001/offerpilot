@@ -46,6 +46,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
+            'role' => fn (): string => match (true) {
+                $user === null => 'guest',
+                $user->merchant !== null => 'seller',
+                default => 'buyer',
+            },
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'merchantName' => fn (): ?string => $user?->merchant?->name,
             'unreadNotifications' => fn (): int => $user?->unreadNotifications()->count() ?? 0,

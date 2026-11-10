@@ -26,8 +26,20 @@ class InventoryController extends Controller
             return Inertia::render('inventory/setup');
         }
 
+        $search = trim($request->string('q')->toString());
+
         $products = $merchant->products()
             ->with('rules')
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($inner) use ($search): void {
+                    $term = '%'.$search.'%';
+
+                    $inner->where('name', 'like', $term)
+                        ->orWhere('sku', 'like', $term)
+                        ->orWhere('brand', 'like', $term)
+                        ->orWhere('category', 'like', $term);
+                });
+            })
             ->orderBy('category')
             ->orderBy('name')
             ->get()
@@ -49,6 +61,7 @@ class InventoryController extends Controller
         return Inertia::render('inventory/index', [
             'merchant' => ['name' => $merchant->name],
             'products' => $products,
+            'filters' => ['q' => $search],
         ]);
     }
 

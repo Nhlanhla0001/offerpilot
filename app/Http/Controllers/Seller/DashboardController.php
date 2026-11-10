@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Seller;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Quote;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,12 +15,14 @@ class DashboardController extends Controller
     /**
      * Show how the shop is performing and what needs attention.
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         $merchant = $request->user()->merchant;
 
+        // A shopper has no shop to manage. Send them back to the storefront,
+        // where opening a shop is an explicit, separate decision.
         if ($merchant === null) {
-            return Inertia::render('inventory/setup');
+            return redirect()->route('store.index');
         }
 
         $paid = $merchant->orders()->where('status', OrderStatus::Paid);

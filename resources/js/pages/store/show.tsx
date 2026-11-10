@@ -97,8 +97,9 @@ export default function StoreShow({
     product: Product;
     paypalClientId: string | null;
 }) {
-    const { auth } = usePage().props as {
+    const { auth, role } = usePage().props as {
         auth: { user: { name: string } | null };
+        role?: string;
     };
 
     const [open, setOpen] = useState(false);
@@ -331,7 +332,9 @@ export default function StoreShow({
                             ← {product.merchant}
                         </Link>
                         <span className="text-sm text-muted-foreground">
-                            {auth.user ? auth.user.name : 'Browsing as a guest'}
+                            {role === 'guest' || !auth.user
+                                ? 'Browsing as a guest'
+                                : `${auth.user.name} · ${role === 'seller' ? 'Seller' : 'Shopper'}`}
                         </span>
                         <div className="flex items-center gap-2">
                             <ThemeToggle className="size-11 md:size-9" />
