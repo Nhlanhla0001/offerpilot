@@ -1,28 +1,31 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { checkout, negotiate } from '@/routes/store';
+import { buy } from '@/routes/store';
 import { capture } from '@/routes/checkout';
 
 type Product = {
     sku: string;
     name: string;
+    brand: string | null;
+    category: string | null;
+    type: string;
     description: string | null;
     price: string;
     priceCents: number;
-    stock: number;
+    image: string;
+    available: boolean;
+    availability: string;
     merchant: string;
 };
 
-type Quote = {
-    id: string;
-    price: string;
-    expiresAt: string | null;
-};
+type Quote = { id: string; price: string };
 
-type ChatMessage = {
-    role: 'buyer' | 'offerpilot';
-    text: string;
-};
+type ChatMessage = { role: 'buyer' | 'assistant'; text: string };
 
 type PayPalButtonsConfig = {
     style?: Record<string, string>;
@@ -84,7 +87,7 @@ export default function StoreShow({
         auth: { user: { name: string } | null };
     };
 
-    const [target, setTarget] = useState('');
+    const [offer, setOffer] = useState('');
     const [ceiling, setCeiling] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -92,33 +95,71 @@ export default function StoreShow({
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [paid, setPaid] = useState<{
-        captureId: string | null;
+        reference: string | null;
         amount: string;
     } | null>(null);
 
     const buttonsRendered = useRef(false);
     const authorizedCeilingCents = useRef(0);
+    const transcriptRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        transcriptRef.current?.scrollTo({
+            top: transcriptRef.current.scrollHeight,
+            behavior: 'smooth',
+        });
+    }, [messages, pending]);
+
+    const startQuote = (nextQuote: Quote, ceilingCents: number) => {
+        authorizedCeilingCents.current = ceilingCents;
+        buttonsRendered.current = false;
+        setQuote(nextQuote);
+    };
+
+    const buyNow = async () => {
+        setError(null);
+        setPending(true);
+
+        try {
+            const data = await postJson<{ quote: Quote }>(
+                buy(product.sku).url,
+                {},
+            );
+            startQuote(data.quote, product.priceCents);
+        } catch (exception) {
+            setError(
+                exception instanceof Error
+                    ? exception.message
+                    : 'Could not start checkout.',
+            );
+        } finally {
+            setPending(false);
+        }
+    };
 
     const send = async (event: FormEvent) => {
         event.preventDefault();
         setError(null);
 
-        const targetCents = centsFromInput(target);
-        const ceilingCents = centsFromInput(ceiling);
+        const targetCents = centsFromInput(offer);
+        const ceilingCents = centsFromInput(ceiling) || targetCents;
 
-        if (targetCents <= 0 || ceilingCents < targetCents) {
-            setError('Set a target, and a maximum at or above it.');
+        if (targetCents <= 0) {
+            setError('Enter the price you would like to pay.');
+            return;
+        }
 
+        if (ceilingCents < targetCents) {
+            setError('Your maximum cannot be below your offer.');
             return;
         }
 
         setPending(true);
         setQuote(null);
         buttonsRendered.current = false;
-        authorizedCeilingCents.current = ceilingCents;
         setMessages((current) => [
             ...current,
-            { role: 'buyer', text: message },
+            { role: 'buyer', text: message || `Would you take $${offer}?` },
         ]);
         setMessage('');
 
@@ -126,7 +167,7 @@ export default function StoreShow({
             const data = await postJson<{ reply: string; quote: Quote | null }>(
                 negotiate(product.sku).url,
                 {
-                    message,
+                    message: message || `Would you take $${offer}?`,
                     target_price_cents: targetCents,
                     ceiling_price_cents: ceilingCents,
                 },
@@ -134,12 +175,11 @@ export default function StoreShow({
 
             setMessages((current) => [
                 ...current,
-                { role: 'offerpilot', text: data.reply },
+                { role: 'assistant', text: data.reply },
             ]);
 
             if (data.quote) {
-                setQuote(data.quote);
-                buttonsRendered.current = false;
+                startQuote(data.quote, ceilingCents);
             }
         } catch (exception) {
             setError(
@@ -185,7 +225,7 @@ export default function StoreShow({
                             authorizedCeilingCents.current
                         ) {
                             throw new Error(
-                                'This offer is above the maximum you authorised.',
+                                'This price is above the maximum you authorised.',
                             );
                         }
 
@@ -207,7 +247,7 @@ export default function StoreShow({
                             });
 
                             setPaid({
-                                captureId: result.captureId,
+                                reference: result.captureId,
                                 amount: result.amount,
                             });
                         } catch (exception) {
@@ -231,7 +271,6 @@ export default function StoreShow({
 
         if (document.getElementById('paypal-sdk')) {
             renderButtons();
-
             return;
         }
 
@@ -246,154 +285,236 @@ export default function StoreShow({
         <>
             <Head title={product.name} />
 
-            <div className="min-h-screen bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
-                <header className="border-b border-[#19140014] dark:border-[#3E3E3A]">
-                    <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
+            <div className="min-h-screen bg-background text-foreground">
+                <header className="border-b border-border">
+                    <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
                         <Link
                             href="/store"
-                            className="text-sm text-[#706f6c] underline-offset-4 hover:underline dark:text-[#A1A09A]"
+                            className="flex h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                         >
-                            ← All products
+                            ← {product.merchant}
                         </Link>
-                        <span className="text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                            {auth.user
-                                ? auth.user.name
-                                : 'Sign in to negotiate'}
+                        <span className="text-sm text-muted-foreground">
+                            {auth.user ? auth.user.name : 'Browsing as a guest'}
                         </span>
                     </div>
                 </header>
 
-                <main className="mx-auto grid max-w-3xl gap-8 px-6 py-10">
-                    <section>
-                        <p className="text-xs tracking-wide text-[#706f6c] uppercase dark:text-[#A1A09A]">
-                            {product.merchant}
+                <main className="mx-auto grid max-w-6xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+                    <div>
+                        <div className="bg-surface overflow-hidden rounded-lg border border-border">
+                            <img
+                                src={product.image}
+                                alt={product.name}
+                                className="aspect-square w-full object-cover"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="lg:sticky lg:top-10 lg:self-start">
+                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                            {product.category}
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold">
+                        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
                             {product.name}
                         </h1>
-                        <p className="mt-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                        {product.brand && (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                {product.brand}
+                            </p>
+                        )}
+
+                        <div className="mt-5 flex items-baseline gap-3">
+                            <span className="text-3xl font-semibold tabular-nums">
+                                ${product.price}
+                            </span>
+                            <Badge
+                                variant={
+                                    product.available ? 'secondary' : 'outline'
+                                }
+                            >
+                                {product.availability}
+                            </Badge>
+                        </div>
+
+                        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                             {product.description}
                         </p>
-                        <p className="mt-4 text-xl font-semibold">
-                            ${product.price}
-                        </p>
-                        <p className="text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                            {product.stock} in stock
-                        </p>
-                    </section>
 
-                    {!auth.user ? (
-                        <section className="rounded-lg border border-[#19140014] p-5 dark:border-[#3E3E3A]">
-                            <p className="text-sm">
-                                Sign in to negotiate a price.
-                            </p>
-                            <Link
-                                href="/login"
-                                className="mt-3 inline-block rounded-sm border border-[#19140035] px-4 py-1.5 text-sm dark:border-[#3E3E3A]"
-                            >
-                                Log in
-                            </Link>
-                        </section>
-                    ) : (
-                        <section className="rounded-lg border border-[#19140014] p-5 dark:border-[#3E3E3A]">
-                            <h2 className="text-sm font-medium">
-                                Your mandate
-                            </h2>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                <label className="text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                    Target price
-                                    <input
-                                        value={target}
-                                        onChange={(event) =>
-                                            setTarget(event.target.value)
-                                        }
-                                        inputMode="decimal"
-                                        placeholder="200"
-                                        className="mt-1 w-full rounded-sm border border-[#19140035] px-3 py-2 text-sm text-[#1b1b18] dark:border-[#3E3E3A] dark:bg-transparent dark:text-[#EDEDEC]"
-                                    />
-                                </label>
-                                <label className="text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                    Maximum you will pay
-                                    <input
-                                        value={ceiling}
-                                        onChange={(event) =>
-                                            setCeiling(event.target.value)
-                                        }
-                                        inputMode="decimal"
-                                        placeholder="225"
-                                        className="mt-1 w-full rounded-sm border border-[#19140035] px-3 py-2 text-sm text-[#1b1b18] dark:border-[#3E3E3A] dark:bg-transparent dark:text-[#EDEDEC]"
-                                    />
-                                </label>
+                        {!paid && (
+                            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+                                <Button
+                                    onClick={buyNow}
+                                    disabled={pending || !product.available}
+                                    className="h-11 bg-brand text-brand-foreground hover:bg-brand-strong"
+                                >
+                                    Buy now — ${product.price}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="h-11"
+                                    onClick={() =>
+                                        document
+                                            .getElementById('offer-panel')
+                                            ?.scrollIntoView({
+                                                behavior: 'smooth',
+                                            })
+                                    }
+                                >
+                                    Make an offer
+                                </Button>
                             </div>
+                        )}
 
-                            <div className="mt-5 space-y-3">
+                        {error && (
+                            <p
+                                role="alert"
+                                className="mt-3 text-sm text-destructive"
+                            >
+                                {error}
+                            </p>
+                        )}
+
+                        {quote && !paid && (
+                            <div className="mt-6 rounded-lg border border-border p-4">
+                                <p className="text-sm font-medium">
+                                    Agreed price{' '}
+                                    <span className="tabular-nums">
+                                        ${quote.price}
+                                    </span>
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {product.name} from {product.merchant}. You
+                                    will be charged ${quote.price} USD.
+                                </p>
+                                <div id="paypal-buttons" className="mt-3" />
+                            </div>
+                        )}
+
+                        {paid && (
+                            <div className="mt-6 rounded-lg border border-brand/40 bg-brand/5 p-4">
+                                <p className="text-sm font-semibold text-brand-strong">
+                                    Payment verified
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    ${paid.amount} charged · reference{' '}
+                                    {paid.reference}
+                                </p>
+                            </div>
+                        )}
+
+                        <div
+                            id="offer-panel"
+                            className="mt-8 border-t border-border pt-6"
+                        >
+                            <h2 className="text-sm font-medium">
+                                Make an offer
+                            </h2>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Tell us what you would pay. The seller answers
+                                in seconds, and never sees more than you choose
+                                to share.
+                            </p>
+
+                            <div
+                                ref={transcriptRef}
+                                role="log"
+                                aria-live="polite"
+                                aria-label="Conversation with the seller"
+                                className="mt-4 max-h-64 space-y-3 overflow-y-auto"
+                            >
+                                {messages.length === 0 && !pending && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Ask a question, or start with an offer.
+                                    </p>
+                                )}
+
                                 {messages.map((entry, index) => (
-                                    <p
+                                    <div
                                         key={index}
                                         className={
                                             entry.role === 'buyer'
-                                                ? 'ml-8 rounded-lg bg-[#1914000f] px-3 py-2 text-sm dark:bg-[#ffffff14]'
-                                                : 'mr-8 rounded-lg border border-[#19140014] px-3 py-2 text-sm dark:border-[#3E3E3A]'
+                                                ? 'bg-surface ml-8 rounded-lg px-3 py-2 text-sm'
+                                                : 'mr-8 rounded-lg border border-border px-3 py-2 text-sm'
                                         }
                                     >
+                                        <span className="mb-1 block text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                                            {entry.role === 'buyer'
+                                                ? 'You'
+                                                : `${product.merchant}'s assistant`}
+                                        </span>
                                         {entry.text}
-                                    </p>
+                                    </div>
                                 ))}
+
+                                {pending && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Thinking…
+                                    </p>
+                                )}
                             </div>
 
-                            <form onSubmit={send} className="mt-4 flex gap-2">
-                                <input
-                                    value={message}
-                                    onChange={(event) =>
-                                        setMessage(event.target.value)
-                                    }
-                                    placeholder="Can you do 200?"
-                                    className="flex-1 rounded-sm border border-[#19140035] px-3 py-2 text-sm dark:border-[#3E3E3A] dark:bg-transparent"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={pending || message.trim() === ''}
-                                    className="rounded-sm border border-[#19140035] px-4 py-2 text-sm disabled:opacity-50 dark:border-[#3E3E3A]"
-                                >
-                                    {pending ? '…' : 'Send'}
-                                </button>
-                            </form>
+                            <form onSubmit={send} className="mt-4 space-y-3">
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <Label
+                                            htmlFor="offer"
+                                            className="text-xs"
+                                        >
+                                            Your offer
+                                        </Label>
+                                        <Input
+                                            id="offer"
+                                            value={offer}
+                                            onChange={(event) =>
+                                                setOffer(event.target.value)
+                                            }
+                                            inputMode="decimal"
+                                            placeholder="200"
+                                            className="mt-1 h-11 text-base"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label
+                                            htmlFor="ceiling"
+                                            className="text-xs"
+                                        >
+                                            Most you will pay
+                                        </Label>
+                                        <Input
+                                            id="ceiling"
+                                            value={ceiling}
+                                            onChange={(event) =>
+                                                setCeiling(event.target.value)
+                                            }
+                                            inputMode="decimal"
+                                            placeholder="225"
+                                            className="mt-1 h-11 text-base"
+                                        />
+                                    </div>
+                                </div>
 
-                            {error && (
-                                <p className="mt-3 text-sm text-red-600">
-                                    {error}
-                                </p>
-                            )}
-
-                            {quote && (
-                                <div className="mt-5 rounded-md border border-[#19140014] p-4 dark:border-[#3E3E3A]">
-                                    <p className="text-sm font-medium">
-                                        Quote held at ${quote.price}
-                                    </p>
-                                    <p className="mt-1 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                        Valid for 15 minutes. Pay with PayPal
-                                        Sandbox to settle it.
-                                    </p>
-                                    <div
-                                        id="paypal-buttons"
-                                        className={paid ? 'hidden' : 'mt-3'}
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={message}
+                                        onChange={(event) =>
+                                            setMessage(event.target.value)
+                                        }
+                                        placeholder="Anything else we should know?"
+                                        aria-label="Message to the seller"
+                                        className="h-11 text-base"
                                     />
+                                    <Button
+                                        type="submit"
+                                        disabled={pending}
+                                        className="h-11 shrink-0 bg-brand text-brand-foreground hover:bg-brand-strong"
+                                    >
+                                        {pending ? 'Sending' : 'Send offer'}
+                                    </Button>
                                 </div>
-                            )}
-
-                            {paid && (
-                                <div className="mt-5 rounded-md border border-emerald-600/40 p-4">
-                                    <p className="text-sm font-medium">
-                                        Payment verified
-                                    </p>
-                                    <p className="mt-1 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                        ${paid.amount} captured ·{' '}
-                                        {paid.captureId}
-                                    </p>
-                                </div>
-                            )}
-                        </section>
-                    )}
+                            </form>
+                        </div>
+                    </div>
                 </main>
             </div>
         </>

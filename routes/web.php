@@ -17,6 +17,7 @@ Route::prefix('store')->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::post('store/{product:sku}/negotiate', NegotiationController::class)->name('store.negotiate');
+    Route::post('store/{product:sku}/buy', [CheckoutController::class, 'buy'])->name('store.buy');
     Route::post('store/{product:sku}/checkout', [CheckoutController::class, 'create'])->name('store.checkout');
     Route::post('checkout/capture', [CheckoutController::class, 'capture'])->name('checkout.capture');
 });

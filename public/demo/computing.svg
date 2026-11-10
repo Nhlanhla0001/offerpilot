@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-label="Computing equipment">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FAFAF8"/>
+      <stop offset="1" stop-color="#E9E9E4"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.78" r="0.55">
+      <stop offset="0" stop-color="#0f766e" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#0f766e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <rect width="1200" height="1200" fill="url(#glow)"/>
+  <g fill="none" stroke="#26262A" stroke-width="14" stroke-linejoin="round">
+    <rect x="330" y="420" width="540" height="330" rx="18"/>
+    <path d="M270 830h660l-50-80H320z"/>
+  </g>
+  <line x1="430" y1="900" x2="770" y2="900" stroke="#0f766e" stroke-opacity="0.25" stroke-width="6"/>
+</svg>

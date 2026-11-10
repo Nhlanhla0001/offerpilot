@@ -9,9 +9,11 @@ use App\Http\Requests\Storefront\CaptureCheckoutRequest;
 use App\Http\Requests\Storefront\CreateCheckoutRequest;
 use App\Models\Order;
 use App\Models\PaymentAttempt;
+use App\Models\Product;
 use App\Models\Quote;
 use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
@@ -19,6 +21,36 @@ class CheckoutController extends Controller
     public function __construct(private readonly PayPalService $paypal)
     {
         //
+    }
+
+    /**
+     * Buy at the listed price, without involving the assistant.
+     */
+    public function buy(Request $request, Product $product): JsonResponse
+    {
+        if (! $product->isAvailable()) {
+            return response()->json(['message' => 'This item is not available right now.'], 422);
+        }
+
+        $this->retirePendingQuotes($request, $product);
+
+        $quote = Quote::create([
+            'product_id' => $product->id,
+            'user_id' => $request->user()->id,
+            'target_price_cents' => $product->list_price_cents,
+            'ceiling_price_cents' => $product->list_price_cents,
+            'agreed_price_cents' => $product->list_price_cents,
+            'rounds_used' => 0,
+            'status' => 'pending',
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        return response()->json([
+            'quote' => [
+                'id' => $quote->quote_id,
+                'price' => $quote->formattedPrice(),
+            ],
+        ]);
     }
 
     /**
@@ -121,5 +153,17 @@ class CheckoutController extends Controller
             'captureId' => $order->paypal_capture_id,
             'amount' => $order->formattedAmount(),
         ]);
+    }
+
+    /**
+     * Retire any earlier pending quote for this buyer and product.
+     */
+    private function retirePendingQuotes(Request $request, Product $product): void
+    {
+        Quote::query()
+            ->where('user_id', $request->user()->id)
+            ->where('product_id', $product->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'expired']);
     }
 }
