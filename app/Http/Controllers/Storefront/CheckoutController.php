@@ -107,11 +107,7 @@ class CheckoutController extends Controller
 
             $order->quote->update(['status' => 'fulfilled']);
 
-            $product = $order->quote->product;
-
-            if ($product !== null) {
-                $product->decrement('stock_quantity');
-            }
+            $order->quote->product->decrement('stock_quantity');
         });
 
         return response()->json([
