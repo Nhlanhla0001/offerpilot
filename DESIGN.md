@@ -180,7 +180,7 @@ proximity and a single hairline border; avoid nested cards. On a product page th
 image and the buy panel sit side by side from 768px up, and stack below it.
 
 The seller workspace is a shell rather than a page: a persistent 256px sidebar
-holding the shop name, Dashboard under **Overview**, Inventory, Orders and
+holding the shop name, Dashboard under **Overview**, Offers, Inventory, Orders and
 Notifications under **Shop**, and the way back to the storefront. It collapses to
 a 64px icon rail and becomes a sheet below 768px. The shell carries no accent
 colour; teal on a seller screen belongs to the one action or the verified state.

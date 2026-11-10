@@ -101,13 +101,27 @@ Open `/store`.
 
 ## Trying it
 
-1. Register an account (or `php artisan db:seed` for `test@example.com`).
-2. Open `/store/HEADPHONES-PRO` — list price **$250.00**.
-3. Enter a target of **200** and a maximum of **225**.
-4. Ask: _"Can you do 200 for me?"_
-5. The merchant counters at **$225.00** and a quote is held for 15 minutes.
-6. Click the PayPal button and sign in with a **Sandbox personal** account.
-7. After approval, the server captures the payment and the panel shows the verified capture.
+**No account is needed to buy.** Open `/store/HEADPHONES-PRO` — list price **$250.00**.
+
+1. Click **Ask a question or make an offer** and ask what is in the box. The assistant answers.
+2. Say _"I can pay $200"_. The merchant counters — the ladder decides, not the model.
+3. Accept the held price and pay with a PayPal **Sandbox personal** account.
+4. After approval the server captures the payment and the panel shows the verified reference.
+
+The seller side starts at `/dashboard`:
+
+1. Sign in as `test@example.com` / `password`.
+2. **Offers** lists every negotiation: what the buyer asked for, what the shop held, and how many rounds it took.
+3. **Inventory** is the only screen that shows the private minimum. **Orders** lists verified captures. **Notifications** reports them.
+
+### Demo accounts
+
+| Role                | Email                   | Password   | Lands on     |
+| ------------------- | ----------------------- | ---------- | ------------ |
+| Seller (Northsound) | `test@example.com`      | `password` | `/dashboard` |
+| Shopper (no shop)   | `buyer@offerpilot.test` | `password` | `/store`     |
+
+A visitor who never signs in is a **guest**: they can ask questions, make an offer and pay. Quotes are bound to the browser session, so one guest can never reach another's quote. A signed-in user without a shop is a **shopper** and is kept out of the seller workspace.
 
 ### Sandbox accounts used during development
 
@@ -125,7 +139,7 @@ php artisan test
 vendor/bin/pint --test
 ```
 
-The suite covers the negotiation ladder, ceiling clamping, alternative matching, the guarantee that the floor never appears in agent context or tool output, and PayPal capture verification including amount tampering and wrong-currency responses.
+The suite covers the negotiation ladder, ceiling clamping, alternative matching, the guarantee that the floor never appears in agent context or tool output, and PayPal capture verification including amount tampering and wrong-currency responses. It also covers guest checkout and quote ownership, seller search, the offers list, and role routing.
 
 ## Project layout
 
@@ -134,8 +148,11 @@ app/Ai/Agents/OfferPilotAgent.php     the negotiating assistant
 app/Ai/Tools/NegotiatePrice.php       the agent's only route to a price
 app/Services/NegotiationService.php   deterministic pricing rules
 app/Services/PayPalService.php        Orders v2 create + verified capture
+app/Services/BuyerSession.php         the guest's identity, bound to the session
 app/Http/Controllers/Storefront/      storefront, negotiation, checkout
+app/Http/Controllers/Seller/          dashboard, offers, inventory, orders, notifications
 resources/js/pages/store/             product list and negotiation panel
+resources/js/pages/offers/            the seller's negotiation list
 ```
 
 ## Design system

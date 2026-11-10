@@ -69,6 +69,7 @@ export default function SellerDashboard({
             value: String(stats.offers),
             hint: 'Negotiations started by buyers',
             icon: MessagesSquare,
+            href: '/offers',
         },
         {
             label: 'Offers accepted',

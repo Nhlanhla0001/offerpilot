@@ -42,6 +42,7 @@ class CheckoutController extends Controller
             'product_id' => $product->id,
             'user_id' => $request->user()?->id,
             'guest_token' => $this->buyers->tokenForQuote($request),
+            'source' => 'buy_now',
             'target_price_cents' => $product->list_price_cents,
             'ceiling_price_cents' => $product->list_price_cents,
             'agreed_price_cents' => $product->list_price_cents,

@@ -16,6 +16,12 @@ class DemoStoreSeeder extends Seeder
     {
         $ownerId = User::query()->orderBy('id')->value('id');
 
+        // A shopper account with no shop, so both roles can be seen side by side.
+        User::query()->firstOrCreate(
+            ['email' => 'buyer@offerpilot.test'],
+            ['name' => 'Sam Shopper', 'password' => 'password'],
+        );
+
         $merchant = Merchant::updateOrCreate(
             ['email' => 'store@offerpilot.test'],
             [

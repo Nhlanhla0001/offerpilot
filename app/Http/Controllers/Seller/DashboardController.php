@@ -45,10 +45,12 @@ class DashboardController extends Controller
 
         $offers = Quote::query()
             ->whereIn('product_id', $merchant->products()->select('id'))
+            ->where('source', 'offer')
             ->count();
 
         $accepted = Quote::query()
             ->whereIn('product_id', $merchant->products()->select('id'))
+            ->where('source', 'offer')
             ->where('status', 'fulfilled')
             ->count();
 

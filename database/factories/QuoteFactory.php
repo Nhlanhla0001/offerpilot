@@ -22,6 +22,7 @@ class QuoteFactory extends Factory
         return [
             'product_id' => Product::factory(),
             'user_id' => null,
+            'source' => 'offer',
             'target_price_cents' => 20_000,
             'ceiling_price_cents' => 22_500,
             'agreed_price_cents' => 22_000,

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Seller\DashboardController;
 use App\Http\Controllers\Seller\InventoryController;
 use App\Http\Controllers\Seller\NotificationsController;
+use App\Http\Controllers\Seller\OffersController;
 use App\Http\Controllers\Seller\OrdersController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
@@ -45,6 +46,7 @@ Route::post('checkout/capture', [CheckoutController::class, 'capture'])
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+    Route::get('offers', [OffersController::class, 'index'])->name('offers.index');
     Route::get('orders', [OrdersController::class, 'index'])->name('orders.index');
 
     Route::prefix('inventory')->group(function () {

@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowUpRight,
     Bell,
+    Handshake,
     LayoutDashboard,
     Package,
     ReceiptText,
@@ -71,6 +72,12 @@ export default function SellerLayout({
     ];
 
     const shop: NavItem[] = [
+        {
+            href: '/offers',
+            label: 'Offers',
+            icon: Handshake,
+            current: path.startsWith('/offers'),
+        },
         {
             href: '/inventory',
             label: 'Inventory',

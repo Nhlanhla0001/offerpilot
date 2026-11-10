@@ -94,6 +94,7 @@ class NegotiatePrice implements Tool
             'product_id' => $this->product->id,
             'user_id' => $this->user?->id,
             'guest_token' => $this->user === null ? $this->guestToken : null,
+            'source' => 'offer',
             'target_price_cents' => $agreedPriceCents,
             'ceiling_price_cents' => $this->ceilingPriceCents,
             'agreed_price_cents' => $agreedPriceCents,
