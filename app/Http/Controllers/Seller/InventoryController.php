@@ -35,7 +35,7 @@ class InventoryController extends Controller
                 'category' => $product->category,
                 'image' => $product->imageUrl(),
                 'list_price' => $this->money($product->list_price_cents),
-                'floor_price' => $this->money($product->rules?->floor_price_cents ?? 0),
+                'floor_price' => $this->money($product->rules->floor_price_cents ?? 0),
                 'stock' => $product->stock_quantity,
                 'availability' => $product->availabilityLabel(),
                 'negotiation' => $product->rules !== null,
@@ -94,11 +94,11 @@ class InventoryController extends Controller
                 'type' => $product->type,
                 'description' => $product->description,
                 'list_price' => number_format($product->list_price_cents / 100, 2, '.', ''),
-                'floor_price' => number_format(($product->rules?->floor_price_cents ?? 0) / 100, 2, '.', ''),
+                'floor_price' => number_format(($product->rules->floor_price_cents ?? 0) / 100, 2, '.', ''),
                 'stock_quantity' => $product->stock_quantity,
                 'image_path' => $product->image_path,
                 'negotiation_enabled' => $product->rules !== null,
-                'max_rounds' => $product->rules?->max_rounds ?? 3,
+                'max_rounds' => $product->rules->max_rounds ?? 3,
             ],
         ]);
     }

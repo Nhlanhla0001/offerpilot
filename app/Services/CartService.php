@@ -54,7 +54,7 @@ final class CartService
             'product_id' => $product->id,
             'quote_id' => $this->validQuote($quote, $product)?->id,
             'quantity' => $quantity,
-            'unit_price_cents' => $this->validQuote($quote, $product)?->agreed_price_cents
+            'unit_price_cents' => $this->validQuote($quote, $product)->agreed_price_cents
                 ?? $product->list_price_cents,
         ])->refresh();
     }
@@ -95,12 +95,8 @@ final class CartService
         foreach ($items as $item) {
             $product = $item->product;
 
-            if ($product === null) {
-                continue;
-            }
-
             $quote = $this->validQuote($item->quote, $product);
-            $unitPrice = $quote?->agreed_price_cents ?? $product->list_price_cents;
+            $unitPrice = $quote->agreed_price_cents ?? $product->list_price_cents;
             $lineTotal = $unitPrice * $item->quantity;
             $subtotal += $lineTotal;
 

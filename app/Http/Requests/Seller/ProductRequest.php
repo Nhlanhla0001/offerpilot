@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Seller;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,12 +24,13 @@ class ProductRequest extends FormRequest
     public function rules(): array
     {
         $product = $this->route('product');
+        $productId = $product instanceof Product ? $product->id : null;
 
         return [
             'name' => ['required', 'string', 'max:120'],
             'sku' => [
                 'required', 'string', 'max:64', 'alpha_dash',
-                Rule::unique('products', 'sku')->ignore($product?->id),
+                Rule::unique('products', 'sku')->ignore($productId),
             ],
             'brand' => ['nullable', 'string', 'max:80'],
             'category' => ['nullable', 'string', 'max:80'],
