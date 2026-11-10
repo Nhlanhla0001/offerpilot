@@ -46,13 +46,13 @@ export default function SellerLayout({
             <Head title={title} />
 
             <header className="border-b border-border">
-                <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
+                <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
                     <Link href="/inventory" className="text-sm font-semibold">
                         OfferPilot
                     </Link>
 
                     <nav
-                        className="flex items-center gap-1"
+                        className="flex flex-wrap items-center gap-1"
                         aria-label="Seller"
                     >
                         {nav.map((item) => (
@@ -74,7 +74,7 @@ export default function SellerLayout({
                     <div className="ml-auto flex items-center gap-4 text-sm">
                         <Link
                             href="/store"
-                            className="flex h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                            className="hidden h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline sm:flex"
                         >
                             View shop
                         </Link>

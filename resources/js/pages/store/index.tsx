@@ -132,8 +132,8 @@ export default function StoreIndex({
                                 aria-pressed={category === item}
                                 className={
                                     category === item
-                                        ? 'h-9 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground'
-                                        : 'h-9 rounded-full border border-border px-4 text-sm text-muted-foreground hover:text-foreground'
+                                        ? 'h-11 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground'
+                                        : 'h-11 rounded-full border border-border px-4 text-sm text-muted-foreground hover:text-foreground'
                                 }
                             >
                                 {item}

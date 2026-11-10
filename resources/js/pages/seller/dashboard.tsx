@@ -84,10 +84,10 @@ export default function SellerDashboard({
                             {recent.map((order) => (
                                 <li
                                     key={order.order_number}
-                                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm"
                                 >
                                     <div>
-                                        <p className="font-medium tabular-nums">
+                                        <p className="font-medium break-all tabular-nums">
                                             {order.order_number}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
