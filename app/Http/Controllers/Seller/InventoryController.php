@@ -8,6 +8,7 @@ use App\Models\Merchant;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -158,7 +159,7 @@ class InventoryController extends Controller
     {
         $validated = $request->validated();
 
-        return [
+        $attributes = [
             'name' => $validated['name'],
             'sku' => strtoupper($validated['sku']),
             'brand' => $validated['brand'] ?? null,
@@ -169,6 +170,18 @@ class InventoryController extends Controller
             'list_price_cents' => (int) round(((float) $validated['list_price']) * 100),
             'stock_quantity' => (int) $validated['stock_quantity'],
         ];
+
+        if ($request->hasFile('image')) {
+            $existing = $request->route('product')?->image_path;
+
+            $attributes['image_path'] = $request->file('image')->store('products', 'public');
+
+            if (is_string($existing) && ! str_starts_with($existing, 'demo/')) {
+                Storage::disk('public')->delete($existing);
+            }
+        }
+
+        return $attributes;
     }
 
     /**

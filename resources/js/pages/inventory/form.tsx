@@ -50,6 +50,7 @@ export default function InventoryForm({
         floor_price: product?.floor_price ?? '',
         stock_quantity: product?.stock_quantity ?? 1,
         image_path: product?.image_path ?? 'demo/audio.svg',
+        image: null as File | null,
         negotiation_enabled: product?.negotiation_enabled ?? true,
         max_rounds: product?.max_rounds ?? 3,
     });
@@ -60,9 +61,9 @@ export default function InventoryForm({
         event.preventDefault();
 
         if (product) {
-            form.patch(`/inventory/${product.id}`);
+            form.patch(`/inventory/${product.id}`, { forceFormData: true });
         } else {
-            form.post('/inventory');
+            form.post('/inventory', { forceFormData: true });
         }
     };
 
@@ -197,6 +198,31 @@ export default function InventoryForm({
                                     ))}
                                 </select>
                             </div>
+                        </div>
+
+                        <div className="rounded-md border border-border p-4">
+                            <Label htmlFor="image">Upload your own photo</Label>
+                            <input
+                                id="image"
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(e) =>
+                                    form.setData(
+                                        'image',
+                                        e.target.files?.[0] ?? null,
+                                    )
+                                }
+                                className="mt-2 block w-full text-sm file:mr-3 file:h-10 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:text-sm"
+                            />
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                JPG, PNG or WebP up to 2MB. Replaces the
+                                illustration above.
+                            </p>
+                            {errors.image && (
+                                <p className="mt-1 text-xs text-destructive">
+                                    {errors.image}
+                                </p>
+                            )}
                         </div>
 
                         <div>

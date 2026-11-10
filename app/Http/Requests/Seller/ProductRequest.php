@@ -40,6 +40,7 @@ class ProductRequest extends FormRequest
             'floor_price' => ['required', 'numeric', 'min:0.01', 'lte:list_price'],
             'stock_quantity' => ['required', 'integer', 'min:0', 'max:100000'],
             'image_path' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'negotiation_enabled' => ['boolean'],
             'max_rounds' => ['required', 'integer', 'min:1', 'max:10'],
         ];
