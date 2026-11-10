@@ -45,7 +45,9 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function buyerKey(Request $request): string
     {
-        return 'buyer:'.($request->user()?->id ?? $request->session()->getId());
+        $user = $request->user();
+
+        return 'buyer:'.($user !== null ? $user->id : $request->session()->getId());
     }
 
     /**
