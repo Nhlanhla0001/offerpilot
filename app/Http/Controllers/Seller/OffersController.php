@@ -48,8 +48,8 @@ class OffersController extends Controller
             ->get()
             ->map(fn (Quote $quote): array => [
                 'id' => $quote->quote_id,
-                'product' => $quote->product?->name,
-                'sku' => $quote->product?->sku,
+                'product' => $quote->product->name,
+                'sku' => $quote->product->sku,
                 'buyer' => $quote->user?->name,
                 'offered' => $this->money($quote->target_price_cents),
                 'held' => $quote->agreed_price_cents === null
