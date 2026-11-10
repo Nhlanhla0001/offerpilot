@@ -19,13 +19,24 @@ class NegotiationController extends Controller
         $validated = $request->validated();
         $user = $request->user();
 
-        $targetPriceCents = (int) $validated['target_price_cents'];
-        $ceilingPriceCents = (int) $validated['ceiling_price_cents'];
+        $targetPriceCents = isset($validated['target_price_cents'])
+            ? (int) $validated['target_price_cents']
+            : null;
+
+        $ceilingPriceCents = isset($validated['ceiling_price_cents'])
+            ? (int) $validated['ceiling_price_cents']
+            : $product->list_price_cents;
 
         $roundsUsed = Quote::query()
             ->where('user_id', $user->id)
             ->where('product_id', $product->id)
+            ->where('created_at', '>=', now()->subMinutes(30))
             ->count();
+
+        $lastQuoteId = Quote::query()
+            ->where('user_id', $user->id)
+            ->where('product_id', $product->id)
+            ->max('id') ?? 0;
 
         $agent = new OfferPilotAgent(
             $product,
@@ -40,9 +51,10 @@ class NegotiationController extends Controller
         $quote = Quote::query()
             ->where('user_id', $user->id)
             ->where('product_id', $product->id)
+            ->where('id', '>', $lastQuoteId)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
-            ->latest('id')
+            ->orderBy('id')
             ->first();
 
         return response()->json([

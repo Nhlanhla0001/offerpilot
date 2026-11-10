@@ -4,8 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { checkout, negotiate } from '@/routes/store';
-import { buy } from '@/routes/store';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { buy, checkout, negotiate } from '@/routes/store';
 import { capture } from '@/routes/checkout';
 
 type Product = {
@@ -76,6 +82,12 @@ function centsFromInput(value: string): number {
     return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
 }
 
+const PROMPTS = [
+    'Can you do a better price?',
+    'What is included in the box?',
+    'Is this right for my setup?',
+];
+
 export default function StoreShow({
     product,
     paypalClientId,
@@ -87,9 +99,9 @@ export default function StoreShow({
         auth: { user: { name: string } | null };
     };
 
-    const [offer, setOffer] = useState('');
-    const [ceiling, setCeiling] = useState('');
+    const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
+    const [ceiling, setCeiling] = useState('');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [quote, setQuote] = useState<Quote | null>(null);
     const [pending, setPending] = useState(false);
@@ -108,12 +120,13 @@ export default function StoreShow({
             top: transcriptRef.current.scrollHeight,
             behavior: 'smooth',
         });
-    }, [messages, pending]);
+    }, [messages, pending, open]);
 
     const startQuote = (nextQuote: Quote, ceilingCents: number) => {
         authorizedCeilingCents.current = ceilingCents;
         buttonsRendered.current = false;
         setQuote(nextQuote);
+        setOpen(false);
     };
 
     const buyNow = async () => {
@@ -139,37 +152,29 @@ export default function StoreShow({
 
     const send = async (event: FormEvent) => {
         event.preventDefault();
+
+        if (message.trim() === '') {
+            return;
+        }
+
         setError(null);
-
-        const targetCents = centsFromInput(offer);
-        const ceilingCents = centsFromInput(ceiling) || targetCents;
-
-        if (targetCents <= 0) {
-            setError('Enter the price you would like to pay.');
-            return;
-        }
-
-        if (ceilingCents < targetCents) {
-            setError('Your maximum cannot be below your offer.');
-            return;
-        }
-
         setPending(true);
         setQuote(null);
         buttonsRendered.current = false;
-        setMessages((current) => [
-            ...current,
-            { role: 'buyer', text: message || `Would you take $${offer}?` },
-        ]);
+
+        const ceilingCents = centsFromInput(ceiling);
+        const text = message;
+        setMessages((current) => [...current, { role: 'buyer', text }]);
         setMessage('');
 
         try {
             const data = await postJson<{ reply: string; quote: Quote | null }>(
                 negotiate(product.sku).url,
                 {
-                    message: message || `Would you take $${offer}?`,
-                    target_price_cents: targetCents,
-                    ceiling_price_cents: ceilingCents,
+                    message: text,
+                    ...(ceilingCents > 0
+                        ? { ceiling_price_cents: ceilingCents }
+                        : {}),
                 },
             );
 
@@ -179,7 +184,10 @@ export default function StoreShow({
             ]);
 
             if (data.quote) {
-                startQuote(data.quote, ceilingCents);
+                startQuote(
+                    data.quote,
+                    ceilingCents > 0 ? ceilingCents : product.priceCents,
+                );
             }
         } catch (exception) {
             setError(
@@ -271,6 +279,7 @@ export default function StoreShow({
 
         if (document.getElementById('paypal-sdk')) {
             renderButtons();
+
             return;
         }
 
@@ -301,14 +310,12 @@ export default function StoreShow({
                 </header>
 
                 <main className="mx-auto grid max-w-6xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-                    <div>
-                        <div className="bg-surface overflow-hidden rounded-lg border border-border">
-                            <img
-                                src={product.image}
-                                alt={product.name}
-                                className="aspect-square w-full object-cover"
-                            />
-                        </div>
+                    <div className="bg-surface overflow-hidden rounded-lg border border-border">
+                        <img
+                            src={product.image}
+                            alt={product.name}
+                            className="aspect-square w-full object-cover"
+                        />
                     </div>
 
                     <div className="lg:sticky lg:top-10 lg:self-start">
@@ -353,15 +360,9 @@ export default function StoreShow({
                                 <Button
                                     variant="outline"
                                     className="h-11"
-                                    onClick={() =>
-                                        document
-                                            .getElementById('offer-panel')
-                                            ?.scrollIntoView({
-                                                behavior: 'smooth',
-                                            })
-                                    }
+                                    onClick={() => setOpen(true)}
                                 >
-                                    Make an offer
+                                    Ask or make an offer
                                 </Button>
                             </div>
                         )}
@@ -402,121 +403,126 @@ export default function StoreShow({
                                 </p>
                             </div>
                         )}
-
-                        <div
-                            id="offer-panel"
-                            className="mt-8 border-t border-border pt-6"
-                        >
-                            <h2 className="text-sm font-medium">
-                                Make an offer
-                            </h2>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Tell us what you would pay. The seller answers
-                                in seconds, and never sees more than you choose
-                                to share.
-                            </p>
-
-                            <div
-                                ref={transcriptRef}
-                                role="log"
-                                aria-live="polite"
-                                aria-label="Conversation with the seller"
-                                className="mt-4 max-h-64 space-y-3 overflow-y-auto"
-                            >
-                                {messages.length === 0 && !pending && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Ask a question, or start with an offer.
-                                    </p>
-                                )}
-
-                                {messages.map((entry, index) => (
-                                    <div
-                                        key={index}
-                                        className={
-                                            entry.role === 'buyer'
-                                                ? 'bg-surface ml-8 rounded-lg px-3 py-2 text-sm'
-                                                : 'mr-8 rounded-lg border border-border px-3 py-2 text-sm'
-                                        }
-                                    >
-                                        <span className="mb-1 block text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                                            {entry.role === 'buyer'
-                                                ? 'You'
-                                                : `${product.merchant}'s assistant`}
-                                        </span>
-                                        {entry.text}
-                                    </div>
-                                ))}
-
-                                {pending && (
-                                    <p className="text-sm text-muted-foreground">
-                                        Thinking…
-                                    </p>
-                                )}
-                            </div>
-
-                            <form onSubmit={send} className="mt-4 space-y-3">
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div>
-                                        <Label
-                                            htmlFor="offer"
-                                            className="text-xs"
-                                        >
-                                            Your offer
-                                        </Label>
-                                        <Input
-                                            id="offer"
-                                            value={offer}
-                                            onChange={(event) =>
-                                                setOffer(event.target.value)
-                                            }
-                                            inputMode="decimal"
-                                            placeholder="200"
-                                            className="mt-1 h-11 text-base"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label
-                                            htmlFor="ceiling"
-                                            className="text-xs"
-                                        >
-                                            Most you will pay
-                                        </Label>
-                                        <Input
-                                            id="ceiling"
-                                            value={ceiling}
-                                            onChange={(event) =>
-                                                setCeiling(event.target.value)
-                                            }
-                                            inputMode="decimal"
-                                            placeholder="225"
-                                            className="mt-1 h-11 text-base"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <Input
-                                        value={message}
-                                        onChange={(event) =>
-                                            setMessage(event.target.value)
-                                        }
-                                        placeholder="Anything else we should know?"
-                                        aria-label="Message to the seller"
-                                        className="h-11 text-base"
-                                    />
-                                    <Button
-                                        type="submit"
-                                        disabled={pending}
-                                        className="h-11 shrink-0 bg-brand text-brand-foreground hover:bg-brand-strong"
-                                    >
-                                        {pending ? 'Sending' : 'Send offer'}
-                                    </Button>
-                                </div>
-                            </form>
-                        </div>
                     </div>
                 </main>
             </div>
+
+            <Sheet open={open} onOpenChange={setOpen}>
+                <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+                    <SheetHeader className="border-b border-border px-5 py-4">
+                        <SheetTitle className="text-base">
+                            {product.merchant}&apos;s assistant
+                        </SheetTitle>
+                        <SheetDescription className="text-xs">
+                            Ask about {product.name}, or say what you would pay.
+                            This is an automated assistant acting for the
+                            seller.
+                        </SheetDescription>
+                    </SheetHeader>
+
+                    <div
+                        ref={transcriptRef}
+                        role="log"
+                        aria-live="polite"
+                        aria-label="Conversation with the seller's assistant"
+                        className="flex-1 space-y-3 overflow-y-auto px-5 py-4"
+                    >
+                        {messages.length === 0 && (
+                            <div className="space-y-3">
+                                <p className="text-sm text-muted-foreground">
+                                    Ask a question, or tell me what you would
+                                    like to pay.
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {PROMPTS.map((prompt) => (
+                                        <button
+                                            key={prompt}
+                                            type="button"
+                                            onClick={() => setMessage(prompt)}
+                                            className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                                        >
+                                            {prompt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {messages.map((entry, index) => (
+                            <div
+                                key={index}
+                                className={
+                                    entry.role === 'buyer'
+                                        ? 'bg-surface ml-6 rounded-lg px-3 py-2 text-sm'
+                                        : 'mr-6 rounded-lg border border-border px-3 py-2 text-sm'
+                                }
+                            >
+                                <span className="mb-1 block text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                                    {entry.role === 'buyer'
+                                        ? 'You'
+                                        : 'Assistant'}
+                                </span>
+                                {entry.text}
+                            </div>
+                        ))}
+
+                        {pending && (
+                            <p className="text-sm text-muted-foreground">
+                                Thinking…
+                            </p>
+                        )}
+                    </div>
+
+                    <form
+                        onSubmit={send}
+                        className="space-y-3 border-t border-border px-5 py-4"
+                    >
+                        <div>
+                            <Label htmlFor="ceiling" className="text-xs">
+                                Most you will pay (optional)
+                            </Label>
+                            <Input
+                                id="ceiling"
+                                value={ceiling}
+                                onChange={(event) =>
+                                    setCeiling(event.target.value)
+                                }
+                                inputMode="decimal"
+                                placeholder="We will never go above this"
+                                className="mt-1 h-11 text-base"
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Input
+                                value={message}
+                                onChange={(event) =>
+                                    setMessage(event.target.value)
+                                }
+                                placeholder="Ask a question, or name a price"
+                                aria-label="Message the seller's assistant"
+                                className="h-11 text-base"
+                            />
+                            <Button
+                                type="submit"
+                                disabled={pending}
+                                className="h-11 shrink-0 bg-brand text-brand-foreground hover:bg-brand-strong"
+                            >
+                                Send
+                            </Button>
+                        </div>
+
+                        {error && (
+                            <p
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
+                                {error}
+                            </p>
+                        )}
+                    </form>
+                </SheetContent>
+            </Sheet>
         </>
     );
 }

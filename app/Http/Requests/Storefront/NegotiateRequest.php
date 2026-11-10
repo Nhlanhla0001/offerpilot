@@ -17,14 +17,17 @@ class NegotiateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
+     * The buyer does not have to state a price to talk to the assistant: they may
+     * simply ask a question. When they do name a figure, the assistant negotiates.
+     *
      * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
-            'message' => ['required', 'string', 'max:1000'],
-            'target_price_cents' => ['required', 'integer', 'min:1'],
-            'ceiling_price_cents' => ['required', 'integer', 'gte:target_price_cents'],
+            'message' => ['required', 'string', 'max:2000'],
+            'target_price_cents' => ['nullable', 'integer', 'min:1'],
+            'ceiling_price_cents' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }
