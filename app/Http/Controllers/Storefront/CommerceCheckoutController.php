@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\PaymentAttempt;
+use App\Notifications\OrderPaid;
 use App\Services\CartService;
 use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
@@ -185,6 +186,8 @@ class CommerceCheckoutController extends Controller
             }
 
             Cart::query()->find($order->cart_id)?->items()->delete();
+
+            $order->merchant?->owner?->notify(new OrderPaid($order));
         });
 
         return response()->json([

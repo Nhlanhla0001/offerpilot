@@ -34,6 +34,11 @@ export default function SellerLayout({
             label: 'Orders',
             current: path.startsWith('/orders'),
         },
+        {
+            href: '/notifications',
+            label: 'Notifications',
+            current: path.startsWith('/notifications'),
+        },
     ];
 
     return (

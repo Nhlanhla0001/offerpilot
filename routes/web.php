@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Seller\DashboardController;
 use App\Http\Controllers\Seller\InventoryController;
+use App\Http\Controllers\Seller\NotificationsController;
 use App\Http\Controllers\Seller\OrdersController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
@@ -30,6 +31,8 @@ Route::prefix('cart')->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+    Route::get('orders', [OrdersController::class, 'index'])->name('orders.index');
 
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
@@ -39,8 +42,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::patch('{product}', [InventoryController::class, 'update'])->name('inventory.update');
     });
-
-    Route::get('orders', [OrdersController::class, 'index'])->name('orders.index');
 
     Route::post('store/{product:sku}/negotiate', NegotiationController::class)->name('store.negotiate');
     Route::post('store/{product:sku}/buy', [CheckoutController::class, 'buy'])->name('store.buy');
