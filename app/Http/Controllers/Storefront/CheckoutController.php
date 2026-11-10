@@ -87,6 +87,7 @@ class CheckoutController extends Controller
 
         $order = Order::create([
             'quote_id' => $quote->id,
+            'merchant_id' => $quote->product->merchant_id,
             'paypal_order_id' => (string) ($paypalOrder['id'] ?? ''),
             'amount_cents' => $quote->agreed_price_cents,
             'currency' => (string) config('services.paypal.currency', 'USD'),
