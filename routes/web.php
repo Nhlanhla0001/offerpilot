@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\NegotiationController;
 use App\Http\Controllers\Storefront\ProductController;
@@ -13,6 +14,13 @@ Route::redirect('/', '/store')->name('home');
 Route::prefix('store')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('store.index');
     Route::get('{product:sku}', [ProductController::class, 'show'])->name('store.show');
+});
+
+Route::prefix('cart')->group(function () {
+    Route::get('/', [CartController::class, 'show'])->name('cart.show');
+    Route::post('items', [CartController::class, 'store'])->name('cart.items.store');
+    Route::patch('items/{item}', [CartController::class, 'update'])->name('cart.items.update');
+    Route::delete('items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
 });
 
 Route::middleware(['auth'])->group(function () {

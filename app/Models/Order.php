@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -27,16 +28,52 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'quote_id',
+    'merchant_id',
+    'cart_id',
+    'order_number',
+    'customer_name',
+    'customer_email',
+    'shipping_address',
+    'shipping_method',
+    'subtotal_cents',
+    'shipping_cents',
     'paypal_order_id',
     'paypal_capture_id',
     'amount_cents',
     'currency',
     'status',
+    'fulfilment_status',
+    'courier',
+    'tracking_number',
 ])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
+
+    /**
+     * Bootstrap the model and its traits.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Order $order): void {
+            if (empty($order->order_number)) {
+                $order->order_number = 'OP-'.strtoupper((string) Str::ulid());
+            }
+        });
+    }
+
+    /**
+     * Get the line items in this order.
+     *
+     * @return HasMany<OrderItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 
     /**
      * Get the quote this order was created from.

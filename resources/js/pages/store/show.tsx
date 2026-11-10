@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet';
 import { buy, checkout, negotiate } from '@/routes/store';
 import { capture } from '@/routes/checkout';
+import CartDrawer, { cartRequest } from '@/components/store/cart-drawer';
 
 type Product = {
     sku: string;
@@ -144,6 +145,31 @@ export default function StoreShow({
                 exception instanceof Error
                     ? exception.message
                     : 'Could not start checkout.',
+            );
+        } finally {
+            setPending(false);
+        }
+    };
+
+    const addToCart = async () => {
+        setError(null);
+        setPending(true);
+
+        try {
+            const summary = await cartRequest('POST', '/cart/items', {
+                sku: product.sku,
+                quantity: 1,
+                ...(quote ? { quote: quote.id } : {}),
+            });
+
+            window.dispatchEvent(
+                new CustomEvent('cart:updated', { detail: summary }),
+            );
+        } catch (exception) {
+            setError(
+                exception instanceof Error
+                    ? exception.message
+                    : 'Could not add to cart.',
             );
         } finally {
             setPending(false);
@@ -306,6 +332,7 @@ export default function StoreShow({
                         <span className="text-sm text-muted-foreground">
                             {auth.user ? auth.user.name : 'Browsing as a guest'}
                         </span>
+                        <CartDrawer />
                     </div>
                 </header>
 
@@ -360,9 +387,17 @@ export default function StoreShow({
                                 <Button
                                     variant="outline"
                                     className="h-11"
+                                    onClick={addToCart}
+                                    disabled={pending || !product.available}
+                                >
+                                    Add to cart
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    className="h-11 sm:col-span-2"
                                     onClick={() => setOpen(true)}
                                 >
-                                    Ask or make an offer
+                                    Ask a question or make an offer
                                 </Button>
                             </div>
                         )}

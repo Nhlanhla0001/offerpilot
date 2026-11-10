@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import CartDrawer from '@/components/store/cart-drawer';
 import { show as storeShow } from '@/routes/store';
 
 type Product = {
@@ -84,6 +85,7 @@ export default function StoreIndex({
                         </div>
 
                         <nav className="flex items-center gap-4 text-sm">
+                            <CartDrawer />
                             <Link
                                 href="/login"
                                 className="flex h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
