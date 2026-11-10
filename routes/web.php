@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Seller\InventoryController;
+use App\Http\Controllers\Seller\OrdersController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\CommerceCheckoutController;
@@ -37,6 +38,8 @@ Route::middleware(['auth'])->prefix('inventory')->group(function () {
     Route::get('{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
     Route::patch('{product}', [InventoryController::class, 'update'])->name('inventory.update');
 });
+
+Route::middleware(['auth'])->get('orders', [OrdersController::class, 'index'])->name('orders.index');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('store/{product:sku}/negotiate', NegotiationController::class)->name('store.negotiate');

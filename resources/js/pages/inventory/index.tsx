@@ -41,6 +41,9 @@ export default function InventoryIndex({
                         </div>
                         <div className="flex items-center gap-2">
                             <Button asChild variant="outline" className="h-11">
+                                <a href="/orders">Orders</a>
+                            </Button>
+                            <Button asChild variant="outline" className="h-11">
                                 <a href="/store">View shop</a>
                             </Button>
                             <Button
