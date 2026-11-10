@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DemoStoreSeeder extends Seeder
@@ -13,12 +14,15 @@ class DemoStoreSeeder extends Seeder
      */
     public function run(): void
     {
+        $ownerId = User::query()->orderBy('id')->value('id');
+
         $merchant = Merchant::updateOrCreate(
             ['email' => 'store@offerpilot.test'],
             [
                 'name' => 'Northsound Audio',
                 'slug' => 'northsound-audio',
                 'tagline' => 'Studio-grade sound, sold by people who use it.',
+                'user_id' => $ownerId,
             ],
         );
 

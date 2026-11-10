@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Seller\InventoryController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\NegotiationController;
@@ -21,6 +22,14 @@ Route::prefix('cart')->group(function () {
     Route::post('items', [CartController::class, 'store'])->name('cart.items.store');
     Route::patch('items/{item}', [CartController::class, 'update'])->name('cart.items.update');
     Route::delete('items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+});
+
+Route::middleware(['auth'])->prefix('inventory')->group(function () {
+    Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('create', [InventoryController::class, 'create'])->name('inventory.create');
+    Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
+    Route::get('{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+    Route::patch('{product}', [InventoryController::class, 'update'])->name('inventory.update');
 });
 
 Route::middleware(['auth'])->group(function () {
