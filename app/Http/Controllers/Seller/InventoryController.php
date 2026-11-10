@@ -206,7 +206,7 @@ class InventoryController extends Controller
      */
     private function money(int $cents): string
     {
-        return number_format($cents / 100, 2, '.', '');
+        return number_format($cents / 100, 2, '.', ',');
     }
 
     /**

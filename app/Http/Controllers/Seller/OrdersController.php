@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Seller;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -32,19 +33,21 @@ class OrdersController extends Controller
                 'items' => $order->items_count,
                 'total' => $order->formattedAmount(),
                 'status' => $order->status->value,
-                'paid' => $order->status->value === 'paid',
+                'paid' => $order->status === OrderStatus::Paid,
                 'capture_id' => $order->paypal_capture_id,
-                'placed_at' => $order->created_at?->toDateTimeString(),
+                'placed_at' => $order->created_at?->format('d M Y, H:i'),
             ]);
 
-        $paid = $orders->where('paid', true);
+        $paid = Order::query()
+            ->where('merchant_id', $merchant->id)
+            ->where('status', OrderStatus::Paid);
 
         return Inertia::render('orders/index', [
             'merchantName' => $merchant->name,
             'orders' => $orders,
             'summary' => [
-                'paid_count' => $paid->count(),
-                'revenue' => number_format($paid->sum(fn (array $o): float => (float) $o['total']), 2, '.', ''),
+                'paid_count' => (clone $paid)->count(),
+                'revenue' => number_format((int) (clone $paid)->sum('amount_cents') / 100, 2, '.', ','),
                 'inventory_count' => $merchant->products()->count(),
                 'low_stock' => $merchant->products()->where('type', 'physical')->where('stock_quantity', '<=', 1)->count(),
             ],

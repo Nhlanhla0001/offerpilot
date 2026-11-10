@@ -106,11 +106,11 @@ class Order extends Model
     }
 
     /**
-     * Get the order amount formatted for display, for example "220.00".
+     * Get the order amount formatted for display, for example "1,220.00".
      */
     public function formattedAmount(): string
     {
-        return number_format($this->amount_cents / 100, 2, '.', '');
+        return number_format($this->amount_cents / 100, 2, '.', ',');
     }
 
     /**

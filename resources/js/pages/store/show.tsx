@@ -337,7 +337,7 @@ export default function StoreShow({
                 </header>
 
                 <main className="mx-auto grid max-w-6xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-                    <div className="bg-surface overflow-hidden rounded-lg border border-border">
+                    <div className="overflow-hidden rounded-lg border border-border bg-surface">
                         <img
                             src={product.image}
                             alt={product.name}
@@ -488,7 +488,7 @@ export default function StoreShow({
                                 key={index}
                                 className={
                                     entry.role === 'buyer'
-                                        ? 'bg-surface ml-6 rounded-lg px-3 py-2 text-sm'
+                                        ? 'ml-6 rounded-lg bg-surface px-3 py-2 text-sm'
                                         : 'mr-6 rounded-lg border border-border px-3 py-2 text-sm'
                                 }
                             >

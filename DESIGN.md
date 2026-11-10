@@ -179,6 +179,14 @@ A 4px base rhythm with an 8/16/24/32 scale. Related items are grouped by
 proximity and a single hairline border; avoid nested cards. On a product page the
 image and the buy panel sit side by side from 768px up, and stack below it.
 
+The seller workspace is a shell rather than a page: a persistent 256px sidebar
+holding the shop name, Dashboard under **Overview**, Inventory, Orders and
+Notifications under **Shop**, and the way back to the storefront. It collapses to
+a 64px icon rail and becomes a sheet below 768px. The shell carries no accent
+colour; teal on a seller screen belongs to the one action or the verified state.
+Each seller screen is one page heading with a one-line factual summary, then
+cards at 10px radius separated by hairlines, never nested.
+
 Primary actions sit within thumb reach on mobile: offer and pay controls belong in
 the lower half of the viewport, never pinned to the top.
 

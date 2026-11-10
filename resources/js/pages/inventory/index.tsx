@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Lock, PackagePlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import SellerLayout from '@/layouts/seller-layout';
@@ -18,6 +19,18 @@ type Item = {
     negotiation: boolean;
 };
 
+function availabilityStyle(label: string): string {
+    if (label === 'Out of stock' || label === 'Unavailable') {
+        return 'bg-destructive/10 text-destructive';
+    }
+
+    if (label === '1 in stock') {
+        return 'bg-amber-500/10 text-amber-700 dark:text-amber-400';
+    }
+
+    return 'bg-surface text-muted-foreground';
+}
+
 export default function InventoryIndex({
     merchant,
     products,
@@ -30,55 +43,80 @@ export default function InventoryIndex({
     return (
         <SellerLayout
             title="Inventory"
+            description={`Everything ${merchant.name} sells. The private minimum only ever appears here.`}
             actions={
                 <Button
                     asChild
                     className="h-11 bg-brand text-brand-foreground hover:bg-brand-strong"
                 >
-                    <Link href="/inventory/create">Add product</Link>
+                    <Link href="/inventory/create">
+                        <PackagePlus
+                            aria-hidden="true"
+                            className="mr-1.5 size-4"
+                        />
+                        Add product
+                    </Link>
                 </Button>
             }
         >
-            <div className="-mt-3">
-                <p className="text-sm text-muted-foreground">
-                    Everything {merchant.name} sells. The private minimum is
-                    only ever shown here.
+            {flash?.success && (
+                <p
+                    role="status"
+                    className="rounded-lg border border-brand/40 bg-brand/5 px-4 py-3 text-sm text-brand-strong"
+                >
+                    {flash.success}
                 </p>
+            )}
 
-                {flash?.success && (
-                    <p
-                        role="status"
-                        className="mt-4 rounded-md border border-brand/40 bg-brand/5 px-4 py-3 text-sm text-brand-strong"
-                    >
-                        {flash.success}
+            {products.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
+                    <PackagePlus
+                        aria-hidden="true"
+                        className="mx-auto size-8 text-muted-foreground"
+                    />
+                    <p className="mt-3 text-sm font-medium">
+                        Nothing in your shop yet
                     </p>
-                )}
-
-                {products.length === 0 ? (
-                    <div className="mt-6 rounded-lg border border-border p-8">
-                        <p className="text-sm font-medium">
-                            Nothing in your shop yet
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Add your first product or service to start selling.
+                    <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                        Add your first product or service to start selling.
+                    </p>
+                    <Button
+                        asChild
+                        className="mt-5 h-11 bg-brand text-brand-foreground hover:bg-brand-strong"
+                    >
+                        <Link href="/inventory/create">Add product</Link>
+                    </Button>
+                </div>
+            ) : (
+                <section className="overflow-hidden rounded-lg border border-border bg-card">
+                    <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+                        <h2 className="text-sm font-semibold">Catalogue</h2>
+                        <p className="text-xs text-muted-foreground tabular-nums">
+                            {products.length}{' '}
+                            {products.length === 1 ? 'item' : 'items'}
                         </p>
                     </div>
-                ) : (
-                    <div className="mt-6 w-full overflow-x-auto rounded-lg border border-border">
+
+                    <div className="w-full overflow-x-auto contain-paint">
                         <table className="w-full text-sm">
                             <thead className="bg-surface text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-5 py-3 font-medium">
                                         Item
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Type
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
                                         Listed
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Minimum
+                                        <span className="inline-flex items-center gap-1">
+                                            <Lock
+                                                aria-hidden="true"
+                                                className="size-3"
+                                            />
+                                            <span title="Private. Buyers and the assistant never see this.">
+                                                Minimum
+                                            </span>
+                                        </span>
                                     </th>
                                     <th className="px-4 py-3 font-medium">
                                         Availability
@@ -86,46 +124,50 @@ export default function InventoryIndex({
                                     <th className="px-4 py-3 font-medium">
                                         Offers
                                     </th>
-                                    <th className="px-4 py-3" />
+                                    <th className="px-5 py-3 text-right font-medium">
+                                        <span className="sr-only">Actions</span>
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-border">
                                 {products.map((item) => (
                                     <tr
                                         key={item.id}
-                                        className="border-t border-border"
+                                        className="transition-colors hover:bg-surface"
                                     >
-                                        <td className="px-4 py-3">
+                                        <td className="px-5 py-3">
                                             <div className="flex items-center gap-3">
                                                 <img
                                                     src={item.image}
                                                     alt=""
-                                                    className="size-10 rounded border border-border object-cover"
+                                                    className="size-11 shrink-0 rounded-md border border-border object-cover"
                                                 />
-                                                <div>
-                                                    <p className="font-medium">
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-medium">
                                                         {item.name}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
+                                                    <p className="mt-0.5 text-xs text-muted-foreground">
                                                         {item.sku}
                                                         {item.category
                                                             ? ` · ${item.category}`
                                                             : ''}
+                                                        {` · ${item.type === 'service' ? 'Service' : 'Physical'}`}
                                                     </p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 capitalize">
-                                            {item.type}
-                                        </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
                                             ${item.list_price}
                                         </td>
-                                        <td className="px-4 py-3 text-right tabular-nums">
+                                        <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">
                                             ${item.floor_price}
                                         </td>
                                         <td className="px-4 py-3">
-                                            {item.availability}
+                                            <span
+                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${availabilityStyle(item.availability)}`}
+                                            >
+                                                {item.availability}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
@@ -140,10 +182,10 @@ export default function InventoryIndex({
                                                     : 'Fixed'}
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-5 py-3 text-right">
                                             <Link
                                                 href={`/inventory/${item.id}/edit`}
-                                                className="text-sm underline-offset-4 hover:underline"
+                                                className="inline-flex h-11 items-center px-1 text-sm font-medium underline-offset-4 hover:underline"
                                             >
                                                 Edit
                                             </Link>
@@ -153,8 +195,8 @@ export default function InventoryIndex({
                             </tbody>
                         </table>
                     </div>
-                )}
-            </div>
+                </section>
+            )}
         </SellerLayout>
     );
 }

@@ -93,6 +93,6 @@ class ProductController extends Controller
      */
     private function price(int $cents): string
     {
-        return number_format($cents / 100, 2, '.', '');
+        return number_format($cents / 100, 2, '.', ',');
     }
 }

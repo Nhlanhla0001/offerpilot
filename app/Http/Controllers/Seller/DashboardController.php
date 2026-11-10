@@ -37,7 +37,7 @@ class DashboardController extends Controller
                 'items' => $order->items_count,
                 'total' => $order->formattedAmount(),
                 'paid' => $order->status === OrderStatus::Paid,
-                'placed_at' => $order->created_at?->toDateTimeString(),
+                'placed_at' => $order->created_at?->format('d M Y, H:i'),
             ]);
 
         $offers = Quote::query()
@@ -53,7 +53,7 @@ class DashboardController extends Controller
             'merchantName' => $merchant->name,
             'stats' => [
                 'paid_orders' => (clone $paid)->count(),
-                'revenue' => number_format($revenue / 100, 2, '.', ''),
+                'revenue' => number_format($revenue / 100, 2, '.', ','),
                 'offers' => $offers,
                 'accepted' => $accepted,
                 'items' => $merchant->products()->count(),

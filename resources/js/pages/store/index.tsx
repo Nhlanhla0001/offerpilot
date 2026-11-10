@@ -154,7 +154,7 @@ export default function StoreIndex({
                                         href={storeShow(product.sku).url}
                                         className="group block"
                                     >
-                                        <div className="bg-surface overflow-hidden rounded-lg border border-border">
+                                        <div className="overflow-hidden rounded-lg border border-border bg-surface">
                                             <img
                                                 src={product.image}
                                                 alt={product.name}
