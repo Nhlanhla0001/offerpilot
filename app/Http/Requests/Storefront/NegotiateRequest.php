@@ -8,10 +8,13 @@ class NegotiateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Guests may negotiate: the buyer does not need an account to talk to the
+     * assistant, and the issued quote is bound to their session.
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**

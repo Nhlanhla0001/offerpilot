@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import ThemeToggle from '@/components/theme-toggle';
 import {
     Sidebar,
     SidebarContent,
@@ -221,6 +222,7 @@ export default function SellerLayout({
                         </p>
 
                         <div className="ml-auto flex items-center gap-2">
+                            <ThemeToggle className="size-11 md:size-9" />
                             <Button
                                 asChild
                                 variant="outline"

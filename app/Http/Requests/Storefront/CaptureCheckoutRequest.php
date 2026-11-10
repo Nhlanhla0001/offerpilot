@@ -8,10 +8,13 @@ class CaptureCheckoutRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Guests may capture: the controller checks the order belongs to their
+     * session before PayPal is called.
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**

@@ -29,6 +29,19 @@ Route::prefix('cart')->group(function () {
     Route::delete('items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
 });
 
+Route::post('store/{product:sku}/negotiate', NegotiationController::class)
+    ->middleware('throttle:buyer-negotiate')
+    ->name('store.negotiate');
+Route::post('store/{product:sku}/buy', [CheckoutController::class, 'buy'])
+    ->middleware('throttle:buyer-checkout')
+    ->name('store.buy');
+Route::post('store/{product:sku}/checkout', [CheckoutController::class, 'create'])
+    ->middleware('throttle:buyer-checkout')
+    ->name('store.checkout');
+Route::post('checkout/capture', [CheckoutController::class, 'capture'])
+    ->middleware('throttle:buyer-checkout')
+    ->name('checkout.capture');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
@@ -43,10 +56,6 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('{product}', [InventoryController::class, 'update'])->name('inventory.update');
     });
 
-    Route::post('store/{product:sku}/negotiate', NegotiationController::class)->name('store.negotiate');
-    Route::post('store/{product:sku}/buy', [CheckoutController::class, 'buy'])->name('store.buy');
-    Route::post('store/{product:sku}/checkout', [CheckoutController::class, 'create'])->name('store.checkout');
-    Route::post('checkout/capture', [CheckoutController::class, 'capture'])->name('checkout.capture');
 });
 
 require __DIR__.'/settings.php';

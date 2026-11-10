@@ -35,6 +35,7 @@ class OfferPilotAgent implements Agent, Conversational, HasTools
         public int $ceilingPriceCents,
         public int $roundsUsed = 0,
         public ?User $user = null,
+        public ?string $guestToken = null,
     ) {
         //
     }
@@ -93,6 +94,7 @@ class OfferPilotAgent implements Agent, Conversational, HasTools
                 $this->user,
                 $this->ceilingPriceCents,
                 $this->roundsUsed,
+                $this->guestToken,
             ),
         ];
     }

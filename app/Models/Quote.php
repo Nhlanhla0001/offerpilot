@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
  * @property string $quote_id
  * @property int $product_id
  * @property int|null $user_id
+ * @property string|null $guest_token
  * @property int $target_price_cents
  * @property int $ceiling_price_cents
  * @property int|null $agreed_price_cents
@@ -34,6 +35,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'product_id',
     'user_id',
+    'guest_token',
     'target_price_cents',
     'ceiling_price_cents',
     'agreed_price_cents',

@@ -9,6 +9,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ThemeToggle from '@/components/theme-toggle';
 
 type Cart = {
     items: {
@@ -214,7 +215,12 @@ export default function Checkout({
                         >
                             ← Back to shop
                         </Link>
-                        <span className="text-sm font-semibold">Checkout</span>
+                        <span className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">
+                                Checkout
+                            </span>
+                            <ThemeToggle className="size-11 md:size-9" />
+                        </span>
                     </div>
                 </header>
 

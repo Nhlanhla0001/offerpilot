@@ -92,7 +92,7 @@ export default function SellerDashboard({
         <SellerLayout title="Dashboard" description={summary}>
             <section
                 aria-label="Shop performance"
-                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
             >
                 {tiles.map((tile) => {
                     const body = (
@@ -120,7 +120,7 @@ export default function SellerDashboard({
                                     </span>
                                 )}
                             </div>
-                            <p className="mt-4 text-2xl font-semibold tracking-tight tabular-nums">
+                            <p className="mt-4 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">
                                 {tile.value}
                             </p>
                             <p className="mt-0.5 text-sm font-medium">
@@ -133,7 +133,7 @@ export default function SellerDashboard({
                     );
 
                     const shell =
-                        'rounded-lg border border-border bg-card p-5 transition-colors';
+                        'rounded-lg border border-border bg-card p-4 transition-colors sm:p-5';
 
                     return tile.href ? (
                         <Link

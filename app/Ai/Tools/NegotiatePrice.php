@@ -26,6 +26,7 @@ class NegotiatePrice implements Tool
         private readonly ?User $user,
         private readonly int $ceilingPriceCents,
         private readonly int $roundsUsed = 0,
+        private readonly ?string $guestToken = null,
     ) {
         //
     }
@@ -79,17 +80,20 @@ class NegotiatePrice implements Tool
      */
     private function issueQuote(int $agreedPriceCents): Quote
     {
-        if ($this->user !== null) {
-            Quote::query()
-                ->where('user_id', $this->user->id)
-                ->where('product_id', $this->product->id)
-                ->where('status', 'pending')
-                ->update(['status' => 'expired']);
-        }
+        $ownership = $this->user !== null
+            ? ['user_id' => $this->user->id]
+            : ['guest_token' => $this->guestToken];
+
+        Quote::query()
+            ->where('product_id', $this->product->id)
+            ->where($ownership)
+            ->where('status', 'pending')
+            ->update(['status' => 'expired']);
 
         return Quote::create([
             'product_id' => $this->product->id,
             'user_id' => $this->user?->id,
+            'guest_token' => $this->user === null ? $this->guestToken : null,
             'target_price_cents' => $agreedPriceCents,
             'ceiling_price_cents' => $this->ceilingPriceCents,
             'agreed_price_cents' => $agreedPriceCents,

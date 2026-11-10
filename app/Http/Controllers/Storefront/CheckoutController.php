@@ -12,6 +12,7 @@ use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\Quote;
 use App\Notifications\OrderPaid;
+use App\Services\BuyerSession;
 use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,8 +20,10 @@ use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
-    public function __construct(private readonly PayPalService $paypal)
-    {
+    public function __construct(
+        private readonly PayPalService $paypal,
+        private readonly BuyerSession $buyers,
+    ) {
         //
     }
 
@@ -37,7 +40,8 @@ class CheckoutController extends Controller
 
         $quote = Quote::create([
             'product_id' => $product->id,
-            'user_id' => $request->user()->id,
+            'user_id' => $request->user()?->id,
+            'guest_token' => $this->buyers->tokenForQuote($request),
             'target_price_cents' => $product->list_price_cents,
             'ceiling_price_cents' => $product->list_price_cents,
             'agreed_price_cents' => $product->list_price_cents,
@@ -59,10 +63,8 @@ class CheckoutController extends Controller
      */
     public function create(CreateCheckoutRequest $request): JsonResponse
     {
-        $quote = Quote::query()
-            ->with('product')
+        $quote = $this->buyers->scope(Quote::query()->with('product'), $request)
             ->where('quote_id', $request->string('quote')->toString())
-            ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
         if (! $quote->status->isAcceptable() || $quote->isExpired()) {
@@ -110,7 +112,10 @@ class CheckoutController extends Controller
             ->where('paypal_order_id', $request->string('paypal_order_id')->toString())
             ->firstOrFail();
 
-        abort_unless($order->quote->user_id === $request->user()->id, 403);
+        abort_unless(
+            $this->buyers->owns($request, $order->quote->user_id, $order->quote->guest_token),
+            403,
+        );
 
         if ($order->status === OrderStatus::Paid) {
             return response()->json([
@@ -164,8 +169,7 @@ class CheckoutController extends Controller
      */
     private function retirePendingQuotes(Request $request, Product $product): void
     {
-        Quote::query()
-            ->where('user_id', $request->user()->id)
+        $this->buyers->scope(Quote::query(), $request)
             ->where('product_id', $product->id)
             ->where('status', 'pending')
             ->update(['status' => 'expired']);

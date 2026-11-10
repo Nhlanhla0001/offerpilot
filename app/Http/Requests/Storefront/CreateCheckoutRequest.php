@@ -8,10 +8,12 @@ class CreateCheckoutRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Guests may pay: the quote is bound to their session, not an account.
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**

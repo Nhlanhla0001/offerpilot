@@ -14,6 +14,7 @@ import {
 import { buy, checkout, negotiate } from '@/routes/store';
 import { capture } from '@/routes/checkout';
 import CartDrawer, { cartRequest } from '@/components/store/cart-drawer';
+import ThemeToggle from '@/components/theme-toggle';
 
 type Product = {
     sku: string;
@@ -332,7 +333,10 @@ export default function StoreShow({
                         <span className="text-sm text-muted-foreground">
                             {auth.user ? auth.user.name : 'Browsing as a guest'}
                         </span>
-                        <CartDrawer />
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle className="size-11 md:size-9" />
+                            <CartDrawer />
+                        </div>
                     </div>
                 </header>
 

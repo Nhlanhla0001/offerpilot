@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import CartDrawer from '@/components/store/cart-drawer';
+import ThemeToggle from '@/components/theme-toggle';
 import { show as storeShow } from '@/routes/store';
 
 type Product = {
@@ -84,7 +85,8 @@ export default function StoreIndex({
                             </div>
                         </div>
 
-                        <nav className="flex items-center gap-4 text-sm">
+                        <nav className="flex items-center gap-2 text-sm sm:gap-4">
+                            <ThemeToggle className="size-11 md:size-9" />
                             <CartDrawer />
                             <Link
                                 href="/login"

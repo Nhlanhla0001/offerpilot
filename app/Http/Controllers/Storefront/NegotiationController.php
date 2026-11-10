@@ -7,10 +7,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Storefront\NegotiateRequest;
 use App\Models\Product;
 use App\Models\Quote;
+use App\Services\BuyerSession;
 use Illuminate\Http\JsonResponse;
 
 class NegotiationController extends Controller
 {
+    public function __construct(private readonly BuyerSession $buyers)
+    {
+        //
+    }
+
     /**
      * Send one buyer message to the negotiation agent and return its reply.
      */
@@ -18,6 +24,7 @@ class NegotiationController extends Controller
     {
         $validated = $request->validated();
         $user = $request->user();
+        $guestToken = $this->buyers->tokenForQuote($request);
 
         $targetPriceCents = isset($validated['target_price_cents'])
             ? (int) $validated['target_price_cents']
@@ -27,14 +34,12 @@ class NegotiationController extends Controller
             ? (int) $validated['ceiling_price_cents']
             : $product->list_price_cents;
 
-        $roundsUsed = Quote::query()
-            ->where('user_id', $user->id)
+        $roundsUsed = $this->buyers->scope(Quote::query(), $request)
             ->where('product_id', $product->id)
             ->where('created_at', '>=', now()->subMinutes(30))
             ->count();
 
-        $lastQuoteId = Quote::query()
-            ->where('user_id', $user->id)
+        $lastQuoteId = $this->buyers->scope(Quote::query(), $request)
             ->where('product_id', $product->id)
             ->max('id') ?? 0;
 
@@ -44,12 +49,14 @@ class NegotiationController extends Controller
             $ceilingPriceCents,
             $roundsUsed,
             $user,
+            $guestToken,
         );
 
-        $reply = (string) $agent->forUser($user)->prompt($validated['message']);
+        $reply = $user !== null
+            ? (string) $agent->forUser($user)->prompt($validated['message'])
+            : (string) $agent->prompt($validated['message']);
 
-        $quote = Quote::query()
-            ->where('user_id', $user->id)
+        $quote = $this->buyers->scope(Quote::query(), $request)
             ->where('product_id', $product->id)
             ->where('id', '>', $lastQuoteId)
             ->where('status', 'pending')
