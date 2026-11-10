@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Seller\ProductRequest;
+use App\Models\Merchant;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,7 +21,9 @@ class InventoryController extends Controller
     {
         $merchant = $request->user()->merchant;
 
-        abort_if($merchant === null, 403);
+        if ($merchant === null) {
+            return Inertia::render('inventory/setup');
+        }
 
         $products = $merchant->products()
             ->with('rules')
@@ -57,6 +61,29 @@ class InventoryController extends Controller
         return Inertia::render('inventory/form', [
             'product' => null,
         ]);
+    }
+
+    /**
+     * Create the shop a new seller will manage.
+     */
+    public function storeSetup(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+            'tagline' => ['nullable', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:120', 'unique:merchants,email'],
+        ]);
+
+        $request->user()->merchant()->create([
+            'name' => $validated['name'],
+            'tagline' => $validated['tagline'] ?? null,
+            'email' => $validated['email'],
+            'slug' => $this->uniqueSlug($validated['name']),
+        ]);
+
+        return redirect()
+            ->route('inventory.index')
+            ->with('success', 'Your shop is ready. Add your first product.');
     }
 
     /**
@@ -166,5 +193,22 @@ class InventoryController extends Controller
     private function money(int $cents): string
     {
         return number_format($cents / 100, 2, '.', '');
+    }
+
+    /**
+     * Build a unique shop slug from a shop name.
+     */
+    private function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: 'shop';
+        $slug = $base;
+        $suffix = 2;
+
+        while (Merchant::query()->where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$suffix;
+            $suffix++;
+        }
+
+        return $slug;
     }
 }

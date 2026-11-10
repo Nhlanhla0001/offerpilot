@@ -28,6 +28,7 @@ Route::middleware(['auth'])->prefix('inventory')->group(function () {
     Route::get('/', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('create', [InventoryController::class, 'create'])->name('inventory.create');
     Route::post('/', [InventoryController::class, 'store'])->name('inventory.store');
+    Route::post('setup', [InventoryController::class, 'storeSetup'])->name('inventory.setup');
     Route::get('{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
     Route::patch('{product}', [InventoryController::class, 'update'])->name('inventory.update');
 });
