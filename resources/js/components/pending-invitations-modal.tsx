@@ -25,14 +25,14 @@ export default function PendingInvitationsModal({
     const [processingCode, setProcessingCode] = useState<string | null>(null);
 
     const acceptInvitation = (invitation: DashboardInvitation) => {
-        router.visit(TeamInvitationController.accept(invitation), {
+        router.visit(`/invitations/${invitation.code}/accept`, {
             onStart: () => setProcessingCode(invitation.code),
             onFinish: () => setProcessingCode(null),
         });
     };
 
     const declineInvitation = (invitation: DashboardInvitation) => {
-        router.visit(TeamInvitationController.decline(invitation), {
+        router.visit(`/invitations/${invitation.code}/decline`, {
             onStart: () => setProcessingCode(invitation.code),
             onFinish: () => setProcessingCode(null),
             onSuccess: () => {
