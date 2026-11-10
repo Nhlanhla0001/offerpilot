@@ -24,12 +24,6 @@ export default function StoreIndex({ products }: { products: Product[] }) {
                                 it can.
                             </p>
                         </div>
-                        <Link
-                            href="/"
-                            className="text-sm text-[#706f6c] underline-offset-4 hover:underline dark:text-[#A1A09A]"
-                        >
-                            Home
-                        </Link>
                     </div>
                 </header>
 
