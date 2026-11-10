@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Seller\InventoryController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\CommerceCheckoutController;
 use App\Http\Controllers\Storefront\NegotiationController;
 use App\Http\Controllers\Storefront\ProductController;
 use App\Http\Controllers\Teams\TeamInvitationController;
@@ -16,6 +17,10 @@ Route::prefix('store')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('store.index');
     Route::get('{product:sku}', [ProductController::class, 'show'])->name('store.show');
 });
+
+Route::get('checkout', [CommerceCheckoutController::class, 'index'])->name('checkout.index');
+Route::post('checkout', [CommerceCheckoutController::class, 'store'])->name('checkout.store');
+Route::post('checkout/complete', [CommerceCheckoutController::class, 'capture'])->name('checkout.complete');
 
 Route::prefix('cart')->group(function () {
     Route::get('/', [CartController::class, 'show'])->name('cart.show');

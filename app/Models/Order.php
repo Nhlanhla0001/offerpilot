@@ -112,6 +112,7 @@ class Order extends Model
     {
         return [
             'status' => OrderStatus::class,
+            'shipping_address' => 'array',
         ];
     }
 }
