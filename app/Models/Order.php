@@ -76,6 +76,16 @@ class Order extends Model
     }
 
     /**
+     * Get the merchant this order belongs to.
+     *
+     * @return BelongsTo<Merchant, $this>
+     */
+    public function merchant(): BelongsTo
+    {
+        return $this->belongsTo(Merchant::class);
+    }
+
+    /**
      * Get the quote this order was created from.
      *
      * @return BelongsTo<Quote, $this>
