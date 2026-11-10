@@ -190,10 +190,9 @@ export default function SellerDashboard({
                                         </p>
                                         <p className="mt-0.5 text-xs text-muted-foreground">
                                             {order.customer ?? 'Guest'} ·{' '}
-                                            {order.items}{' '}
-                                            {order.items === 1
-                                                ? 'item'
-                                                : 'items'}
+                                            {order.items > 0
+                                                ? `${order.items} ${order.items === 1 ? 'item' : 'items'}`
+                                                : 'Negotiated price'}
                                             {order.placed_at
                                                 ? ` · ${order.placed_at}`
                                                 : ''}
