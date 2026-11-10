@@ -40,6 +40,12 @@ class CheckoutController extends Controller
             return response()->json(['message' => 'This quote has no agreed price.'], 422);
         }
 
+        if ($quote->agreed_price_cents > $quote->ceiling_price_cents) {
+            return response()->json([
+                'message' => 'This offer is above the maximum you authorised, so it cannot be charged.',
+            ], 422);
+        }
+
         $paypalOrder = $this->paypal->createOrder(
             $quote->agreed_price_cents,
             $quote->quote_id,

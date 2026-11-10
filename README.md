@@ -138,6 +138,19 @@ app/Http/Controllers/Storefront/      storefront, negotiation, checkout
 resources/js/pages/store/             product list and negotiation panel
 ```
 
+## Design system
+
+`DESIGN.md` is the source of truth for colour, typography, spacing and component
+rules, in Google's open [DESIGN.md](https://github.com/google-labs-code/design.md)
+format. It lints clean:
+
+```bash
+npx -p @google/design.md designmd lint DESIGN.md
+```
+
+The brand accent is a single deep teal, contrast-verified in both themes
+(5.11:1 on white, 8.36:1 on near-black).
+
 ## Security notes
 
 - `.env` is ignored; only `.env.example` with empty placeholders is committed.

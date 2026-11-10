@@ -97,6 +97,7 @@ export default function StoreShow({
     } | null>(null);
 
     const buttonsRendered = useRef(false);
+    const authorizedCeilingCents = useRef(0);
 
     const send = async (event: FormEvent) => {
         event.preventDefault();
@@ -112,6 +113,9 @@ export default function StoreShow({
         }
 
         setPending(true);
+        setQuote(null);
+        buttonsRendered.current = false;
+        authorizedCeilingCents.current = ceilingCents;
         setMessages((current) => [
             ...current,
             { role: 'buyer', text: message },
@@ -162,6 +166,12 @@ export default function StoreShow({
 
             buttonsRendered.current = true;
 
+            const host = document.getElementById('paypal-buttons');
+
+            if (host) {
+                host.innerHTML = '';
+            }
+
             paypal
                 .Buttons({
                     style: {
@@ -170,6 +180,15 @@ export default function StoreShow({
                         label: 'paypal',
                     },
                     createOrder: async () => {
+                        if (
+                            centsFromInput(quote.price) >
+                            authorizedCeilingCents.current
+                        ) {
+                            throw new Error(
+                                'This offer is above the maximum you authorised.',
+                            );
+                        }
+
                         const data = await postJson<{ paypalOrderId: string }>(
                             checkout(product.sku).url,
                             { quote: quote.id },
