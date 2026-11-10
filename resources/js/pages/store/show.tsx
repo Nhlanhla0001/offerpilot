@@ -32,7 +32,9 @@ type PayPalButtonsConfig = {
 };
 
 type PayPalSdk = {
-    Buttons: (config: PayPalButtonsConfig) => { render: (selector: string) => void };
+    Buttons: (config: PayPalButtonsConfig) => {
+        render: (selector: string) => void;
+    };
 };
 
 function xsrfToken(): string {
@@ -57,7 +59,8 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 
     if (!response.ok) {
         throw new Error(
-            (data as { message?: string }).message ?? 'Something went wrong. Try again.',
+            (data as { message?: string }).message ??
+                'Something went wrong. Try again.',
         );
     }
 
@@ -77,7 +80,9 @@ export default function StoreShow({
     product: Product;
     paypalClientId: string | null;
 }) {
-    const { auth } = usePage().props as { auth: { user: { name: string } | null } };
+    const { auth } = usePage().props as {
+        auth: { user: { name: string } | null };
+    };
 
     const [target, setTarget] = useState('');
     const [ceiling, setCeiling] = useState('');
@@ -86,7 +91,10 @@ export default function StoreShow({
     const [quote, setQuote] = useState<Quote | null>(null);
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [paid, setPaid] = useState<{ captureId: string | null; amount: string } | null>(null);
+    const [paid, setPaid] = useState<{
+        captureId: string | null;
+        amount: string;
+    } | null>(null);
 
     const buttonsRendered = useRef(false);
 
@@ -104,7 +112,10 @@ export default function StoreShow({
         }
 
         setPending(true);
-        setMessages((current) => [...current, { role: 'buyer', text: message }]);
+        setMessages((current) => [
+            ...current,
+            { role: 'buyer', text: message },
+        ]);
         setMessage('');
 
         try {
@@ -117,14 +128,21 @@ export default function StoreShow({
                 },
             );
 
-            setMessages((current) => [...current, { role: 'offerpilot', text: data.reply }]);
+            setMessages((current) => [
+                ...current,
+                { role: 'offerpilot', text: data.reply },
+            ]);
 
             if (data.quote) {
                 setQuote(data.quote);
                 buttonsRendered.current = false;
             }
         } catch (exception) {
-            setError(exception instanceof Error ? exception.message : 'Something went wrong.');
+            setError(
+                exception instanceof Error
+                    ? exception.message
+                    : 'Something went wrong.',
+            );
         } finally {
             setPending(false);
         }
@@ -146,7 +164,11 @@ export default function StoreShow({
 
             paypal
                 .Buttons({
-                    style: { layout: 'vertical', shape: 'rect', label: 'paypal' },
+                    style: {
+                        layout: 'vertical',
+                        shape: 'rect',
+                        label: 'paypal',
+                    },
                     createOrder: async () => {
                         const data = await postJson<{ paypalOrderId: string }>(
                             checkout(product.sku).url,
@@ -161,9 +183,14 @@ export default function StoreShow({
                                 status: string;
                                 captureId: string | null;
                                 amount: string;
-                            }>(capture().url, { paypal_order_id: data.orderID });
+                            }>(capture().url, {
+                                paypal_order_id: data.orderID,
+                            });
 
-                            setPaid({ captureId: result.captureId, amount: result.amount });
+                            setPaid({
+                                captureId: result.captureId,
+                                amount: result.amount,
+                            });
                         } catch (exception) {
                             setError(
                                 exception instanceof Error
@@ -210,21 +237,27 @@ export default function StoreShow({
                             ← All products
                         </Link>
                         <span className="text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                            {auth.user ? auth.user.name : 'Sign in to negotiate'}
+                            {auth.user
+                                ? auth.user.name
+                                : 'Sign in to negotiate'}
                         </span>
                     </div>
                 </header>
 
                 <main className="mx-auto grid max-w-3xl gap-8 px-6 py-10">
                     <section>
-                        <p className="text-xs uppercase tracking-wide text-[#706f6c] dark:text-[#A1A09A]">
+                        <p className="text-xs tracking-wide text-[#706f6c] uppercase dark:text-[#A1A09A]">
                             {product.merchant}
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold">{product.name}</h1>
+                        <h1 className="mt-1 text-2xl font-semibold">
+                            {product.name}
+                        </h1>
                         <p className="mt-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                             {product.description}
                         </p>
-                        <p className="mt-4 text-xl font-semibold">${product.price}</p>
+                        <p className="mt-4 text-xl font-semibold">
+                            ${product.price}
+                        </p>
                         <p className="text-xs text-[#706f6c] dark:text-[#A1A09A]">
                             {product.stock} in stock
                         </p>
@@ -232,7 +265,9 @@ export default function StoreShow({
 
                     {!auth.user ? (
                         <section className="rounded-lg border border-[#19140014] p-5 dark:border-[#3E3E3A]">
-                            <p className="text-sm">Sign in to negotiate a price.</p>
+                            <p className="text-sm">
+                                Sign in to negotiate a price.
+                            </p>
                             <Link
                                 href="/login"
                                 className="mt-3 inline-block rounded-sm border border-[#19140035] px-4 py-1.5 text-sm dark:border-[#3E3E3A]"
@@ -242,13 +277,17 @@ export default function StoreShow({
                         </section>
                     ) : (
                         <section className="rounded-lg border border-[#19140014] p-5 dark:border-[#3E3E3A]">
-                            <h2 className="text-sm font-medium">Your mandate</h2>
+                            <h2 className="text-sm font-medium">
+                                Your mandate
+                            </h2>
                             <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                 <label className="text-xs text-[#706f6c] dark:text-[#A1A09A]">
                                     Target price
                                     <input
                                         value={target}
-                                        onChange={(event) => setTarget(event.target.value)}
+                                        onChange={(event) =>
+                                            setTarget(event.target.value)
+                                        }
                                         inputMode="decimal"
                                         placeholder="200"
                                         className="mt-1 w-full rounded-sm border border-[#19140035] px-3 py-2 text-sm text-[#1b1b18] dark:border-[#3E3E3A] dark:bg-transparent dark:text-[#EDEDEC]"
@@ -258,7 +297,9 @@ export default function StoreShow({
                                     Maximum you will pay
                                     <input
                                         value={ceiling}
-                                        onChange={(event) => setCeiling(event.target.value)}
+                                        onChange={(event) =>
+                                            setCeiling(event.target.value)
+                                        }
                                         inputMode="decimal"
                                         placeholder="225"
                                         className="mt-1 w-full rounded-sm border border-[#19140035] px-3 py-2 text-sm text-[#1b1b18] dark:border-[#3E3E3A] dark:bg-transparent dark:text-[#EDEDEC]"
@@ -284,7 +325,9 @@ export default function StoreShow({
                             <form onSubmit={send} className="mt-4 flex gap-2">
                                 <input
                                     value={message}
-                                    onChange={(event) => setMessage(event.target.value)}
+                                    onChange={(event) =>
+                                        setMessage(event.target.value)
+                                    }
                                     placeholder="Can you do 200?"
                                     className="flex-1 rounded-sm border border-[#19140035] px-3 py-2 text-sm dark:border-[#3E3E3A] dark:bg-transparent"
                                 />
@@ -297,7 +340,11 @@ export default function StoreShow({
                                 </button>
                             </form>
 
-                            {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+                            {error && (
+                                <p className="mt-3 text-sm text-red-600">
+                                    {error}
+                                </p>
+                            )}
 
                             {quote && (
                                 <div className="mt-5 rounded-md border border-[#19140014] p-4 dark:border-[#3E3E3A]">
@@ -305,7 +352,8 @@ export default function StoreShow({
                                         Quote held at ${quote.price}
                                     </p>
                                     <p className="mt-1 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                        Valid for 15 minutes. Pay with PayPal Sandbox to settle it.
+                                        Valid for 15 minutes. Pay with PayPal
+                                        Sandbox to settle it.
                                     </p>
                                     <div
                                         id="paypal-buttons"
@@ -316,9 +364,12 @@ export default function StoreShow({
 
                             {paid && (
                                 <div className="mt-5 rounded-md border border-emerald-600/40 p-4">
-                                    <p className="text-sm font-medium">Payment verified</p>
+                                    <p className="text-sm font-medium">
+                                        Payment verified
+                                    </p>
                                     <p className="mt-1 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                                        ${paid.amount} captured · {paid.captureId}
+                                        ${paid.amount} captured ·{' '}
+                                        {paid.captureId}
                                     </p>
                                 </div>
                             )}

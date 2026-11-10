@@ -38,9 +38,9 @@ PayPalService  ──►  Orders v2: create → buyer approves → capture
 ### How PayPal is used
 
 - `App\Services\PayPalService` calls **Orders v2** over HTTP with a cached OAuth token.
-  - `POST /v2/checkout/orders` creates the order for the quoted amount.
-  - The buyer approves in the PayPal Sandbox.
-  - `POST /v2/checkout/orders/{id}/capture` captures payment.
+    - `POST /v2/checkout/orders` creates the order for the quoted amount.
+    - The buyer approves in the PayPal Sandbox.
+    - `POST /v2/checkout/orders/{id}/capture` captures payment.
 - The browser is never trusted. `captureIsVerified()` re-checks the PayPal response for `COMPLETED` status, matching currency, and the **exact** quoted amount before an order is marked paid.
 
 ### Pricing rules
@@ -104,7 +104,7 @@ Open `/store`.
 1. Register an account (or `php artisan db:seed` for `test@example.com`).
 2. Open `/store/HEADPHONES-PRO` — list price **$250.00**.
 3. Enter a target of **200** and a maximum of **225**.
-4. Ask: *"Can you do 200 for me?"*
+4. Ask: _"Can you do 200 for me?"_
 5. The merchant counters at **$225.00** and a quote is held for 15 minutes.
 6. Click the PayPal button and sign in with a **Sandbox personal** account.
 7. After approval, the server captures the payment and the panel shows the verified capture.
