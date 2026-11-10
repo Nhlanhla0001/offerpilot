@@ -1,6 +1,5 @@
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
-import TeamInvitationController from '@/actions/App/Http/Controllers/Teams/TeamInvitationController';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
