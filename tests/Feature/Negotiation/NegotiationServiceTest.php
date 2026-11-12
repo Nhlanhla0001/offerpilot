@@ -81,13 +81,16 @@ test('clamps the counter to the buyer ceiling', function () {
         ->and($result->priceCents)->toBe(22_000);
 });
 
-test('makes a best and final offer at the floor on the last round', function () {
+test('makes a final counter above the private floor after the last round', function () {
     $product = negotiableProduct();
 
     $result = app(NegotiationService::class)->negotiate($product, 20_000, 25_000, roundsUsed: 3);
 
     expect($result->status)->toBe(NegotiationStatus::Countered)
-        ->and($result->priceCents)->toBe(21_000)
+        ->and($result->priceCents)->toBe(22_000)
+        ->and($result->priceCents)->not->toBe(21_000)
+        ->and($result->message)->not->toContain('21.00')
+        ->and($result->message)->not->toContain('lowest the merchant will go')
         ->and($result->canCounter)->toBeFalse();
 });
 

@@ -53,12 +53,12 @@ test('the seller sees every offer on their own shop, including guest offers', fu
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('offers/index')
-            ->has('offers', 2)
-            ->where('offers.0.buyer', 'Thandi Buyer')
-            ->where('offers.0.status', 'Paid')
-            ->where('offers.1.buyer', null)
-            ->where('offers.1.status', 'Open')
-            ->where('offers.1.held', '230.00')
+            ->has('offers.data', 2)
+            ->where('offers.data.0.buyer', 'Thandi Buyer')
+            ->where('offers.data.0.status', 'Paid')
+            ->where('offers.data.1.buyer', null)
+            ->where('offers.data.1.status', 'Open')
+            ->where('offers.data.1.held', '230.00')
             ->where('counts.all', 2)
             ->where('counts.open', 1)
             ->where('counts.paid', 1));
@@ -80,16 +80,16 @@ test('offers can be filtered by status', function () {
         ->get('/offers?status=paid')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('offers', 1)
-            ->where('offers.0.status', 'Paid')
+            ->has('offers.data', 1)
+            ->where('offers.data.0.status', 'Paid')
             ->where('filters.status', 'paid'));
 
     $this->actingAs($seller)
         ->get('/offers?status=expired')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('offers', 1)
-            ->where('offers.0.status', 'Expired'));
+            ->has('offers.data', 1)
+            ->where('offers.data.0.status', 'Expired'));
 });
 
 test('a shopper without a shop cannot open the offers screen', function () {

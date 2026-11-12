@@ -1,7 +1,11 @@
 <?php
 
-test('sends visitors from the root to the shop', function () {
-    $response = $this->get(route('home'));
+use Inertia\Testing\AssertableInertia as Assert;
 
-    $response->assertRedirect(route('store.index'));
+test('introduces the product before sending visitors to the shop', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('welcome')
+            ->where('role', 'guest'));
 });

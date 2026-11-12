@@ -97,6 +97,17 @@ class CheckoutController extends Controller
             'status' => OrderStatus::Created,
         ]);
 
+        $order->items()->create([
+            'product_id' => $quote->product_id,
+            'quote_id' => $quote->id,
+            'name' => $quote->product->name,
+            'sku' => $quote->product->sku,
+            'quantity' => 1,
+            'unit_price_cents' => $quote->agreed_price_cents,
+            'unit_cost_cents' => $quote->product->unit_cost_cents,
+            'line_total_cents' => $quote->agreed_price_cents,
+        ]);
+
         return response()->json([
             'paypalOrderId' => $order->paypal_order_id,
             'amount' => $order->formattedAmount(),
@@ -126,26 +137,36 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $capture = $this->paypal->captureOrder($order->paypal_order_id);
-        $verified = $this->paypal->captureIsVerified($capture, $order->amount_cents);
+        $result = DB::transaction(function () use ($order): array {
+            $product = Product::query()
+                ->whereKey($order->quote->product_id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        PaymentAttempt::create([
-            'order_id' => $order->id,
-            'action' => PaymentAction::Capture,
-            'status' => (string) ($capture['status'] ?? 'UNKNOWN'),
-            'payload' => $capture,
-            'error_message' => $verified ? null : 'Capture did not match the quoted amount.',
-        ]);
+            if (! $product->isService() && $product->stock_quantity < 1) {
+                return [
+                    'status' => 'stock_unavailable',
+                    'message' => "Only {$product->stock_quantity} of {$product->name} are left. Your payment was not captured.",
+                ];
+            }
 
-        if (! $verified) {
-            $order->update(['status' => OrderStatus::Failed]);
+            $capture = $this->paypal->captureOrder($order->paypal_order_id);
+            $verified = $this->paypal->captureIsVerified($capture, $order->amount_cents);
 
-            return response()->json([
-                'message' => 'PayPal did not confirm a completed payment for the quoted amount.',
-            ], 422);
-        }
+            PaymentAttempt::create([
+                'order_id' => $order->id,
+                'action' => PaymentAction::Capture,
+                'status' => (string) ($capture['status'] ?? 'UNKNOWN'),
+                'payload' => $capture,
+                'error_message' => $verified ? null : 'Capture did not match the quoted amount.',
+            ]);
 
-        DB::transaction(function () use ($order, $capture): void {
+            if (! $verified) {
+                $order->update(['status' => OrderStatus::Failed]);
+
+                return ['status' => 'capture_failed'];
+            }
+
             $order->update([
                 'status' => OrderStatus::Paid,
                 'paypal_capture_id' => $this->paypal->captureId($capture),
@@ -153,10 +174,26 @@ class CheckoutController extends Controller
 
             $order->quote->update(['status' => 'fulfilled']);
 
-            $order->quote->product->decrement('stock_quantity');
+            if (! $product->isService()) {
+                $product->decrement('stock_quantity');
+            }
 
             $order->merchant?->owner?->notify(new OrderPaid($order));
+
+            return ['status' => 'paid'];
         });
+
+        if ($result['status'] === 'stock_unavailable') {
+            return response()->json([
+                'message' => $result['message'],
+            ], 422);
+        }
+
+        if ($result['status'] === 'capture_failed') {
+            return response()->json([
+                'message' => 'PayPal did not confirm a completed payment for the quoted amount.',
+            ], 422);
+        }
 
         return response()->json([
             'status' => 'paid',

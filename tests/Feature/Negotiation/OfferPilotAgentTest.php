@@ -16,7 +16,10 @@ function offerPilotProductForAgent(): Product
         'name' => 'Studio Headphones',
         'sku' => 'HEADPHONES-PRO',
         'list_price_cents' => 25_000,
+        'unit_cost_cents' => 8_500,
         'stock_quantity' => 4,
+        'features' => ['Closed-back drivers', 'Replaceable earpads'],
+        'specifications' => ['Impedance' => '38 Ω'],
     ]);
 
     $product->rules()->create([
@@ -87,10 +90,44 @@ test('the agent instructions never contain the merchant floor', function () {
     $instructions = (string) offerPilotAgent($product)->instructions();
 
     expect($instructions)->toContain('Studio Headphones')
+        ->and($instructions)->toContain('checks out from their cart')
+        ->and($instructions)->not->toContain('product page')
         ->and($instructions)->toContain('250.00')
+        ->and($instructions)->toContain('Closed-back drivers')
+        ->and($instructions)->toContain('Impedance: 38 Ω')
         ->and($instructions)->not->toContain('210.00')
         ->and($instructions)->not->toContain('21000')
+        ->and($instructions)->not->toContain('85.00')
+        ->and($instructions)->not->toContain('8500')
         ->and($instructions)->not->toContain('floor');
+});
+
+test('the agent is told to admit when product details are unpublished', function () {
+    $product = Product::factory()->create([
+        'features' => [],
+        'specifications' => [],
+        'description' => null,
+    ]);
+    $instructions = (string) offerPilotAgent($product)->instructions();
+
+    expect($instructions)
+        ->toContain('Public features: not provided.')
+        ->toContain('Public specifications: not provided.')
+        ->toContain('If a detail is not listed, say the shop has not published it');
+});
+
+test('the final price tool counter stays above the private floor', function () {
+    $product = offerPilotProductForAgent();
+    $tool = new NegotiatePrice($product, null, 25_000, roundsUsed: 3);
+
+    $payload = json_decode(
+        (string) $tool->handle(new Request(['target_price_cents' => 20_000])),
+        true,
+    );
+
+    expect($payload['price'])->toBe('220.00')
+        ->and(json_encode($payload))->not->toContain('210.00')
+        ->and(json_encode($payload))->not->toContain('21000');
 });
 
 test('the agent can be prompted without calling a provider', function () {

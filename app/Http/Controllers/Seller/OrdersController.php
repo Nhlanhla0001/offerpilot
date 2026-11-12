@@ -39,9 +39,9 @@ class OrdersController extends Controller
             })
             ->withCount('items')
             ->orderByDesc('id')
-            ->limit(50)
-            ->get()
-            ->map(fn (Order $order): array => [
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Order $order): array => [
                 'order_number' => $order->order_number,
                 'customer' => $order->customer_name,
                 'email' => $order->customer_email,

@@ -42,19 +42,38 @@ final class CartService
      */
     public function add(Cart $cart, Product $product, int $quantity = 1, ?Quote $quote = null): CartItem
     {
+        $validQuote = $this->validQuote($quote, $product);
+
+        // A negotiated price is held for one unit. Without a quantity on the
+        // quote, expanding the line would extend the discount beyond what the
+        // merchant authorised.
+        if ($validQuote !== null) {
+            $quantity = 1;
+        }
+
         $quantity = max(1, min($quantity, $this->ceilingFor($product)));
 
         $existing = $cart->items()->where('product_id', $product->id)->first();
 
         if ($existing instanceof CartItem) {
+            if ($validQuote !== null) {
+                $existing->update([
+                    'quote_id' => $validQuote->id,
+                    'quantity' => 1,
+                    'unit_price_cents' => $validQuote->agreed_price_cents,
+                ]);
+
+                return $existing->refresh();
+            }
+
             return $this->setQuantity($existing, $existing->quantity + $quantity);
         }
 
         return $cart->items()->create([
             'product_id' => $product->id,
-            'quote_id' => $this->validQuote($quote, $product)?->id,
+            'quote_id' => $validQuote?->id,
             'quantity' => $quantity,
-            'unit_price_cents' => $this->validQuote($quote, $product)->agreed_price_cents
+            'unit_price_cents' => $validQuote->agreed_price_cents
                 ?? $product->list_price_cents,
         ])->refresh();
     }
@@ -64,7 +83,9 @@ final class CartService
      */
     public function setQuantity(CartItem $item, int $quantity): CartItem
     {
-        $quantity = max(1, min($quantity, $this->ceilingFor($item->product)));
+        $validQuote = $this->validQuote($item->quote, $item->product);
+        $maximum = $validQuote === null ? $this->ceilingFor($item->product) : 1;
+        $quantity = max(1, min($quantity, $maximum));
 
         $item->update(['quantity' => $quantity]);
 
@@ -111,9 +132,11 @@ final class CartService
                 'image' => $product->imageUrl(),
                 'quantity' => $item->quantity,
                 'unit_price' => $this->money($unitPrice),
+                'unit_price_cents' => $unitPrice,
                 'line_total' => $this->money($lineTotal),
+                'line_total_cents' => $lineTotal,
                 'negotiated' => $quote !== null,
-                'max_quantity' => $this->ceilingFor($product),
+                'max_quantity' => $quote === null ? $this->ceilingFor($product) : 1,
             ];
         }
 

@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { BadgeCheck, BellRing } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import SellerLayout from '@/layouts/seller-layout';
+import Pagination, { type Paginated } from '@/components/pagination';
 
 type Item = {
     id: string;
@@ -15,14 +16,15 @@ type Item = {
 export default function NotificationsIndex({
     notifications,
 }: {
-    notifications: Item[];
+    notifications: Paginated<Item>;
 }) {
+    const items = notifications.data;
     return (
         <SellerLayout
             title="Notifications"
             description="Payments and shop events, newest first."
         >
-            {notifications.length === 0 ? (
+            {items.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
                     <BellRing
                         aria-hidden="true"
@@ -38,12 +40,12 @@ export default function NotificationsIndex({
                     <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
                         <h2 className="text-sm font-semibold">Recent</h2>
                         <p className="text-xs text-muted-foreground tabular-nums">
-                            {notifications.length} of the latest
+                            {notifications.total} total
                         </p>
                     </div>
 
                     <ul className="divide-y divide-border">
-                        {notifications.map((item) => (
+                        {items.map((item) => (
                             <li
                                 key={item.id}
                                 className="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-surface"
@@ -87,6 +89,7 @@ export default function NotificationsIndex({
                     </ul>
                 </section>
             )}
+            <Pagination pages={notifications} label="Notifications" />
         </SellerLayout>
     );
 }

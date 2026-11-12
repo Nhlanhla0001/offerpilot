@@ -64,9 +64,11 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 
 export default function Checkout({
     cart,
+    merchantName,
     paypalClientId,
 }: {
     cart: Cart;
+    merchantName: string | null;
     paypalClientId: string | null;
 }) {
     const [form, setForm] = useState({
@@ -211,12 +213,26 @@ export default function Checkout({
                     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
                         <Link
                             href="/store"
-                            className="flex h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:underline"
+                            className="flex items-center gap-2.5"
+                            aria-label={`Back to ${merchantName ?? 'the shop'}`}
                         >
-                            ← Back to shop
+                            <span className="grid size-9 place-items-center rounded-md bg-brand text-[13px] font-semibold text-brand-foreground">
+                                {merchantName
+                                    ? merchantName
+                                          .split(' ')
+                                          .filter(Boolean)
+                                          .slice(0, 2)
+                                          .map((word) => word[0])
+                                          .join('')
+                                          .toUpperCase()
+                                    : 'OP'}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                {merchantName ?? 'Checkout'}
+                            </span>
                         </Link>
                         <span className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">
+                            <span className="text-sm text-muted-foreground">
                                 Checkout
                             </span>
                             <ThemeToggle className="size-11 md:size-9" />

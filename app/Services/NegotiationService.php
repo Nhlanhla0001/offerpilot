@@ -66,12 +66,22 @@ final class NegotiationService
         }
 
         if ($roundsUsed >= $rules->max_rounds) {
+            $finalCounterCents = min(
+                $this->concessionPrice(
+                    $product->list_price_cents,
+                    $floorPriceCents,
+                    $rules->max_rounds - 1,
+                    $rules->max_rounds,
+                ),
+                $ceilingPriceCents,
+            );
+
             return new NegotiationResult(
                 status: NegotiationStatus::Countered,
-                priceCents: $floorPriceCents,
+                priceCents: $finalCounterCents,
                 message: sprintf(
-                    'Best and final offer: %s. This is the lowest the merchant will go.',
-                    $this->money($floorPriceCents),
+                    'This is the shop’s final offer at %s.',
+                    $this->money($finalCounterCents),
                 ),
                 roundsUsed: $roundsUsed,
                 canCounter: false,

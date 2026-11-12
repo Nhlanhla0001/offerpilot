@@ -16,6 +16,8 @@ return new class extends Migration
             $table->ulid('quote_id')->unique();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('guest_token', 26)->nullable()->index();
+            $table->string('source', 20)->default('buy_now')->index();
             $table->unsignedInteger('target_price_cents');
             $table->unsignedInteger('ceiling_price_cents');
             $table->unsignedInteger('agreed_price_cents')->nullable();

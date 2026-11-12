@@ -42,8 +42,10 @@ class InventoryController extends Controller
             })
             ->orderBy('category')
             ->orderBy('name')
-            ->get()
-            ->map(fn (Product $product): array => [
+            ->orderBy('id')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Product $product): array => [
                 'id' => $product->id,
                 'sku' => $product->sku,
                 'name' => $product->name,
@@ -82,6 +84,8 @@ class InventoryController extends Controller
      */
     public function storeSetup(Request $request): RedirectResponse
     {
+        abort_if($request->user()->merchant !== null, 409);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:80'],
             'tagline' => ['nullable', 'string', 'max:120'],
@@ -135,9 +139,20 @@ class InventoryController extends Controller
                 'type' => $product->type,
                 'description' => $product->description,
                 'list_price' => number_format($product->list_price_cents / 100, 2, '.', ''),
+                'unit_cost' => $product->unit_cost_cents === null
+                    ? null
+                    : number_format($product->unit_cost_cents / 100, 2, '.', ''),
                 'floor_price' => number_format(($product->rules->floor_price_cents ?? 0) / 100, 2, '.', ''),
                 'stock_quantity' => $product->stock_quantity,
                 'image_path' => $product->image_path,
+                'features' => array_values($product->features ?? []),
+                'specifications' => collect($product->specifications ?? [])
+                    ->map(fn (string $value, string $key): array => [
+                        'key' => $key,
+                        'value' => $value,
+                    ])
+                    ->values()
+                    ->all(),
                 'negotiation_enabled' => $product->rules !== null,
                 'max_rounds' => $product->rules->max_rounds ?? 3,
             ],
@@ -181,8 +196,23 @@ class InventoryController extends Controller
             'description' => $validated['description'] ?? null,
             'image_path' => $validated['image_path'] ?? null,
             'list_price_cents' => (int) round(((float) $validated['list_price']) * 100),
+            'unit_cost_cents' => isset($validated['unit_cost']) && $validated['unit_cost'] !== ''
+                ? (int) round(((float) $validated['unit_cost']) * 100)
+                : null,
             'stock_quantity' => (int) $validated['stock_quantity'],
         ];
+
+        if (array_key_exists('features', $validated)) {
+            $attributes['features'] = array_values($validated['features']);
+        }
+
+        if (array_key_exists('specifications', $validated)) {
+            $attributes['specifications'] = collect($validated['specifications'])
+                ->mapWithKeys(fn (array $specification): array => [
+                    trim($specification['key']) => trim($specification['value']),
+                ])
+                ->all();
+        }
 
         if ($request->hasFile('image')) {
             $routeProduct = $request->route('product');

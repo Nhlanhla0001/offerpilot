@@ -77,6 +77,77 @@ test('a valid quote is honoured in the cart', function () {
         ->and($summary['items'][0]['negotiated'])->toBeTrue();
 });
 
+test('a negotiated quote is held for one unit only', function () {
+    $product = Product::factory()->create(['list_price_cents' => 25_000, 'stock_quantity' => 5]);
+
+    $quote = Quote::factory()->create([
+        'product_id' => $product->id,
+        'agreed_price_cents' => 22_500,
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+
+    $service = app(CartService::class);
+    $cart = $service->forSession('session-quote-quantity');
+
+    $service->add($cart, $product, 4, $quote);
+    $service->add($cart, $product, 4, $quote);
+
+    $summary = $service->summary($cart->refresh());
+
+    expect($summary['items'][0]['quantity'])->toBe(1)
+        ->and($summary['items'][0]['unit_price'])->toBe('225.00')
+        ->and($summary['count'])->toBe(1);
+});
+
+test('a negotiated cart line cannot be increased beyond its quoted unit', function () {
+    $product = Product::factory()->create([
+        'list_price_cents' => 25_000,
+        'stock_quantity' => 5,
+    ]);
+    $quote = Quote::factory()->create([
+        'product_id' => $product->id,
+        'agreed_price_cents' => 22_500,
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+    $service = app(CartService::class);
+    $cart = $service->forSession('session-quoted-line-quantity');
+    $item = $service->add($cart, $product, 1, $quote);
+
+    $service->setQuantity($item, 4);
+    $summary = $service->summary($cart->refresh());
+
+    expect($summary['items'][0]['quantity'])->toBe(1)
+        ->and($summary['items'][0]['max_quantity'])->toBe(1)
+        ->and($summary['items'][0]['unit_price'])->toBe('225.00')
+        ->and($summary['items'][0]['negotiated'])->toBeTrue();
+});
+
+test('accepting a quote reprices a line that was already in the cart', function () {
+    $product = Product::factory()->create(['list_price_cents' => 25_000, 'stock_quantity' => 5]);
+
+    $service = app(CartService::class);
+    $cart = $service->forSession('session-quote-reprice');
+
+    $service->add($cart, $product, 3);
+
+    $quote = Quote::factory()->create([
+        'product_id' => $product->id,
+        'agreed_price_cents' => 22_500,
+        'status' => 'pending',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+
+    $service->add($cart, $product, 1, $quote);
+
+    $summary = $service->summary($cart->refresh());
+
+    expect($summary['items'][0]['quantity'])->toBe(1)
+        ->and($summary['items'][0]['unit_price'])->toBe('225.00')
+        ->and($summary['items'][0]['negotiated'])->toBeTrue();
+});
+
 test('carts are isolated by session', function () {
     $first = Product::factory()->create();
     $second = Product::factory()->create();

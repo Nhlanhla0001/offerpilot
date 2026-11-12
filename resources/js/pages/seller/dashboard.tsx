@@ -2,11 +2,14 @@ import { Link } from '@inertiajs/react';
 import {
     ArrowUpRight,
     BadgeCheck,
+    ChartNoAxesColumnIncreasing,
     CircleDollarSign,
     Clock,
+    Gauge,
     MessagesSquare,
     Package,
     PackageX,
+    ReceiptText,
     ThumbsUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -39,6 +42,12 @@ export default function SellerDashboard({
     stats: {
         paid_orders: number;
         revenue: string;
+        average_order_value: string | null;
+        gross_profit: string | null;
+        profit_costed_orders: number;
+        profit_paid_orders: number;
+        offer_acceptance_rate: number | null;
+        revenue_trend: { label: string; date: string; revenue_cents: number }[];
         offers: number;
         accepted: number;
         items: number;
@@ -51,6 +60,10 @@ export default function SellerDashboard({
         stats.paid_orders === 0
             ? 'No verified sales yet. Revenue appears here only after PayPal confirms a capture.'
             : `${stats.paid_orders} verified ${stats.paid_orders === 1 ? 'sale' : 'sales'} worth $${stats.revenue}.`;
+    const trendPeak = Math.max(
+        1,
+        ...stats.revenue_trend.map((day) => day.revenue_cents),
+    );
 
     const tiles: Stat[] = [
         {
@@ -72,10 +85,41 @@ export default function SellerDashboard({
             href: '/offers',
         },
         {
+            label: 'Avg. order value',
+            value: stats.average_order_value
+                ? `$${stats.average_order_value}`
+                : '—',
+            hint: 'Verified payments only',
+            icon: ReceiptText,
+            href: '/orders',
+        },
+        {
+            label: 'Known-cost profit',
+            value: stats.gross_profit ? `$${stats.gross_profit}` : '—',
+            hint:
+                stats.profit_paid_orders === 0
+                    ? 'No paid order costs recorded yet'
+                    : `Costs known for ${stats.profit_costed_orders} of ${stats.profit_paid_orders} paid orders`,
+            icon: ChartNoAxesColumnIncreasing,
+        },
+        {
             label: 'Offers accepted',
             value: String(stats.accepted),
-            hint: 'Paid after agreeing a price',
+            hint:
+                stats.offer_acceptance_rate === null
+                    ? 'Acceptance rate appears after an offer'
+                    : `${stats.offer_acceptance_rate}% of offers paid`,
             icon: ThumbsUp,
+        },
+        {
+            label: 'Acceptance rate',
+            value:
+                stats.offer_acceptance_rate === null
+                    ? '—'
+                    : `${stats.offer_acceptance_rate}%`,
+            hint: `${stats.accepted} paid of ${stats.offers} offers`,
+            icon: Gauge,
+            href: '/offers',
         },
         {
             label: 'Awaiting payment',
@@ -150,6 +194,53 @@ export default function SellerDashboard({
                         </div>
                     );
                 })}
+            </section>
+
+            <section className="rounded-lg border border-border bg-card p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                        <h2 className="text-sm font-semibold">
+                            Verified revenue
+                        </h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Daily PayPal captures · last 7 days
+                        </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                        Gross profit excludes payment fees and orders with
+                        incomplete cost records.
+                    </span>
+                </div>
+                <div
+                    role="img"
+                    aria-label="Daily verified revenue over the last seven days"
+                    className="mt-5 grid h-32 grid-cols-7 items-end gap-2 sm:gap-4"
+                >
+                    {stats.revenue_trend.map((day) => {
+                        const height = Math.max(
+                            4,
+                            (day.revenue_cents / trendPeak) * 100,
+                        );
+
+                        return (
+                            <div
+                                key={day.date}
+                                className="flex h-full flex-col items-center justify-end gap-2"
+                                aria-label={`${day.label}: $${(day.revenue_cents / 100).toFixed(2)}`}
+                            >
+                                <div className="flex h-full w-full items-end rounded-sm bg-surface">
+                                    <div
+                                        className="w-full rounded-sm bg-brand transition-[height]"
+                                        style={{ height: `${height}%` }}
+                                    />
+                                </div>
+                                <span className="text-[10px] text-muted-foreground">
+                                    {day.label}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
             </section>
 
             <div className="grid items-start gap-6 lg:grid-cols-3">

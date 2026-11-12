@@ -127,7 +127,7 @@ export default function CartDrawer() {
                     <SheetHeader className="border-b border-border px-5 py-4">
                         <SheetTitle className="text-base">Your cart</SheetTitle>
                         <SheetDescription className="text-xs">
-                            Prices are confirmed by the shop when you check out.
+                            Prices and stock are checked again on the server.
                         </SheetDescription>
                     </SheetHeader>
 

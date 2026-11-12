@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
  * @property int $amount_cents
  * @property string $currency
  * @property OrderStatus $status
+ * @property string|null $experiment_variant
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Quote $quote
@@ -42,6 +43,7 @@ use Illuminate\Support\Str;
     'amount_cents',
     'currency',
     'status',
+    'experiment_variant',
     'fulfilment_status',
     'courier',
     'tracking_number',

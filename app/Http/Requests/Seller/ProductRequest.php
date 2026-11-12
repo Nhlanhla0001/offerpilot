@@ -37,12 +37,18 @@ class ProductRequest extends FormRequest
             'type' => ['required', Rule::in(['physical', 'service'])],
             'description' => ['nullable', 'string', 'max:2000'],
             'list_price' => ['required', 'numeric', 'min:0.01', 'max:1000000'],
+            'unit_cost' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
             'floor_price' => ['required', 'numeric', 'min:0.01', 'lte:list_price'],
             'stock_quantity' => ['required', 'integer', 'min:0', 'max:100000'],
             'image_path' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'negotiation_enabled' => ['boolean'],
             'max_rounds' => ['required', 'integer', 'min:1', 'max:10'],
+            'features' => ['sometimes', 'array', 'max:20'],
+            'features.*' => ['required', 'string', 'max:200'],
+            'specifications' => ['sometimes', 'array', 'max:20'],
+            'specifications.*.key' => ['required', 'string', 'max:80', 'distinct:ignore_case'],
+            'specifications.*.value' => ['required', 'string', 'max:200'],
         ];
     }
 

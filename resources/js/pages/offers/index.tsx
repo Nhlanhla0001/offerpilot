@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { BadgeCheck, MessagesSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import SellerLayout from '@/layouts/seller-layout';
+import Pagination, { type Paginated } from '@/components/pagination';
 
 type Offer = {
     id: string;
@@ -36,7 +37,7 @@ export default function OffersIndex({
     filters,
 }: {
     merchantName: string;
-    offers: Offer[];
+    offers: Paginated<Offer>;
     counts: Counts;
     filters: { status: string };
 }) {
@@ -44,6 +45,7 @@ export default function OffersIndex({
         counts.all === 0
             ? 'No buyer has made an offer yet. Every negotiation with the assistant appears here.'
             : `${counts.open} open ${counts.open === 1 ? 'offer' : 'offers'}, ${counts.paid} paid, ${counts.expired} expired.`;
+    const offerItems = offers.data;
 
     return (
         <SellerLayout title="Offers" description={description}>
@@ -76,7 +78,7 @@ export default function OffersIndex({
                 })}
             </div>
 
-            {offers.length === 0 ? (
+            {offerItems.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
                     <MessagesSquare
                         aria-hidden="true"
@@ -98,8 +100,8 @@ export default function OffersIndex({
                     <div className="flex items-baseline gap-2 border-b border-border px-5 py-4">
                         <h2 className="text-sm font-semibold">Negotiations</h2>
                         <p className="text-xs text-muted-foreground tabular-nums">
-                            {offers.length}{' '}
-                            {offers.length === 1 ? 'offer' : 'offers'}
+                            {offers.total}{' '}
+                            {offers.total === 1 ? 'offer' : 'offers'}
                         </p>
                     </div>
 
@@ -131,7 +133,7 @@ export default function OffersIndex({
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {offers.map((offer) => (
+                                {offerItems.map((offer) => (
                                     <tr
                                         key={offer.id}
                                         className="transition-colors hover:bg-surface"
@@ -188,6 +190,7 @@ export default function OffersIndex({
                     </div>
                 </section>
             )}
+            <Pagination pages={offers} label="Offers" />
         </SellerLayout>
     );
 }

@@ -44,9 +44,9 @@ class OffersController extends Controller
 
         $offers = $this->applyFilter($scope()->with(['product', 'user']), $filter)
             ->orderByDesc('id')
-            ->limit(100)
-            ->get()
-            ->map(fn (Quote $quote): array => [
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Quote $quote): array => [
                 'id' => $quote->quote_id,
                 'product' => $quote->product->name,
                 'sku' => $quote->product->sku,

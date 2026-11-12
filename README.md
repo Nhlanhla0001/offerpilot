@@ -2,7 +2,7 @@
 
 **Name your budget. The merchant meets you where it can.**
 
-OfferPilot is a negotiating storefront built for the 2026 PayPal AI Hackathon. A buyer sets a target price and a hard maximum, talks to an AI assistant, and the merchant answers with a real, server-issued quote that can be paid immediately through the PayPal Sandbox.
+OfferPilot is a seller-operated commerce platform with an AI sales assistant. Buyers can shop at the listed price, ask questions, or make an offer; the assistant can only negotiate up to a maximum the buyer explicitly confirms, and accepted prices become server-issued quotes.
 
 The design goal is trust in both directions:
 
@@ -14,15 +14,16 @@ The design goal is trust in both directions:
 
 ```
 Browser (Inertia + React)
-   │  target + ceiling + message
+   │  buyer confirms a maximum, then sends a message
    ▼
-OfferPilotAgent  ──tool──►  NegotiatePrice  ──►  NegotiationService
-   │                          │                    (deterministic pricing)
-   │  reply                   │ quote_id
-   ▼                          ▼
- Chat panel               quotes table
-   │
-   │  Pay with PayPal
+StorefrontAssistant ──tool──► NegotiateStorePrice ──► NegotiationService
+   │                            │                        (deterministic pricing)
+   │  reply + buyer actions     │ quote_id
+   ▼                            ▼
+ Chat panel                 quotes table
+   │ buyer confirms adding a quote to cart
+   ▼
+ Cart ──► Checkout ──► PayPal approval
    ▼
 PayPalService  ──►  Orders v2: create → buyer approves → capture
                         └─ capture verified server-side (status + exact amount)
@@ -30,9 +31,9 @@ PayPalService  ──►  Orders v2: create → buyer approves → capture
 
 ### How AI is used
 
-- `App\Ai\Agents\OfferPilotAgent` is a Laravel AI SDK agent (`laravel/ai`) running on DeepSeek.
-- Its only route to a price is the `negotiate_price` tool. The tool calls `NegotiationService`, so the model cannot invent, round, or negotiate past the rules.
-- The agent is given the buyer's target and ceiling only. It is never given the merchant floor, so there is nothing for it to leak — by construction, not by instruction.
+- `App\Ai\Agents\StorefrontAssistant` is the storefront's Laravel AI SDK agent (`laravel/ai`) running on DeepSeek.
+- Its only route to a negotiated price is `NegotiateStorePrice`, which calls `NegotiationService`. The maximum is read from the buyer's explicit, product-specific authorization in their session; it is never accepted from the model's tool arguments.
+- The assistant receives the buyer-authorized maximum and public catalogue facts, never the merchant floor or cost. Search, product lookup, and negotiation results are server-generated and buyer-safe.
 - Conversation history is persisted by the AI SDK's `RemembersConversations` trait.
 
 ### How PayPal is used
@@ -87,7 +88,7 @@ DEEPSEEK_API_KEY=your-deepseek-key
 Seed the demo catalogue:
 
 ```bash
-php artisan db:seed --class=DemoStoreSeeder
+php artisan db:seed --no-interaction
 ```
 
 Run it:
@@ -97,16 +98,16 @@ composer run dev      # Laravel + Vite together
 # or: php artisan serve and npm run dev in separate terminals
 ```
 
-Open `/store`.
+Open `/` for the product overview, then `/store` for the demo shop.
 
 ## Trying it
 
 **No account is needed to buy.** Open `/store/HEADPHONES-PRO` — list price **$250.00**.
 
-1. Click **Ask a question or make an offer** and ask what is in the box. The assistant answers.
-2. Say _"I can pay $200"_. The merchant counters — the ladder decides, not the model.
-3. Accept the held price and pay with a PayPal **Sandbox personal** account.
-4. After approval the server captures the payment and the panel shows the verified reference.
+1. Ask the assistant a product question; it answers from published shop information.
+2. Explicitly confirm the maximum you authorize for that product, then make an offer. The deterministic pricing service decides the result.
+3. Accept a held quote and confirm adding it to your cart. Nothing is added without your confirmation.
+4. Review your cart and check out with a PayPal **Sandbox personal** account. After approval, the server verifies the capture before confirming the order.
 
 The seller side starts at `/dashboard`:
 
@@ -151,7 +152,8 @@ app/Services/PayPalService.php        Orders v2 create + verified capture
 app/Services/BuyerSession.php         the guest's identity, bound to the session
 app/Http/Controllers/Storefront/      storefront, negotiation, checkout
 app/Http/Controllers/Seller/          dashboard, offers, inventory, orders, notifications
-resources/js/pages/store/             product list and negotiation panel
+resources/js/pages/welcome.tsx        the product overview at /
+resources/js/pages/store/             the shop and product pages
 resources/js/pages/offers/            the seller's negotiation list
 ```
 
@@ -171,8 +173,24 @@ The brand accent is a single deep teal, contrast-verified in both themes
 ## Security notes
 
 - `.env` is ignored; only `.env.example` with empty placeholders is committed.
-- Merchant floors live in `merchant_rules` and are never serialised to Inertia props, agent prompts, tool output, or logs.
+- Merchant floors live in `merchant_rules` and are never serialised to buyer pages, agent prompts, tool output, or buyer-visible logs. The seller's own inventory screen is the only place they appear.
 - Every captured payment is verified against the quoted amount server-side.
+
+## Demo imagery
+
+The shop's products and brands are fictional. Product photographs are licensed
+stock images from [Pexels](https://www.pexels.com/license/), used as stand-ins
+rather than as photographs of the listed products.
+
+| Product             | Pexels photo                                       |
+| ------------------- | -------------------------------------------------- |
+| Studio headphones   | [3394650](https://www.pexels.com/photo/3394650/)   |
+| Wireless earbuds    | [16703782](https://www.pexels.com/photo/16703782/) |
+| Desk microphone     | [13044705](https://www.pexels.com/photo/13044705/) |
+| Ultrabook           | [10655906](https://www.pexels.com/photo/10655906/) |
+| 4K monitor          | [21325134](https://www.pexels.com/photo/21325134/) |
+| Mechanical keyboard | [13728045](https://www.pexels.com/photo/13728045/) |
+| Studio consultation | [164755](https://www.pexels.com/photo/164755/)     |
 
 ## License
 

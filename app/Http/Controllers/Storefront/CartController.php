@@ -7,14 +7,19 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\Quote;
+use App\Services\BuyerSession;
 use App\Services\CartService;
+use App\Services\StorefrontExperiment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    public function __construct(private readonly CartService $cart)
-    {
+    public function __construct(
+        private readonly CartService $cart,
+        private readonly BuyerSession $buyers,
+        private readonly StorefrontExperiment $experiment,
+    ) {
         //
     }
 
@@ -46,16 +51,17 @@ class CartController extends Controller
         $quote = null;
 
         if (isset($validated['quote'])) {
-            $quote = Quote::query()
+            $quote = $this->buyers->scope(Quote::query(), $request)
                 ->where('quote_id', $validated['quote'])
                 ->where('product_id', $product->id)
-                ->where('user_id', $request->user()?->id)
                 ->first();
         }
 
         $cart = $this->currentCart($request);
 
         $this->cart->add($cart, $product, (int) ($validated['quantity'] ?? 1), $quote);
+
+        $this->experiment->record($request, 'cart_action', ['action' => 'add']);
 
         return response()->json($this->cart->summary($cart->refresh()));
     }
@@ -73,6 +79,8 @@ class CartController extends Controller
 
         $this->cart->setQuantity($item, (int) $validated['quantity']);
 
+        $this->experiment->record($request, 'cart_action', ['action' => 'update']);
+
         return response()->json($this->cart->summary($this->currentCart($request)));
     }
 
@@ -84,6 +92,8 @@ class CartController extends Controller
         $this->authoriseItem($request, $item);
 
         $this->cart->remove($item);
+
+        $this->experiment->record($request, 'cart_action', ['action' => 'remove']);
 
         return response()->json($this->cart->summary($this->currentCart($request)));
     }

@@ -20,6 +20,10 @@ return new class extends Migration
             $table->softDeletes();
         });
 
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('current_team_id')->references('id')->on('teams')->nullOnDelete();
+        });
+
         Schema::create('team_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
@@ -48,6 +52,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['current_team_id']);
+        });
+
         Schema::dropIfExists('team_invitations');
         Schema::dropIfExists('team_members');
         Schema::dropIfExists('teams');

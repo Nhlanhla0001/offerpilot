@@ -28,8 +28,8 @@ test('inventory search filters by product name, sku and brand', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('inventory/index')
-            ->has('products', 1)
-            ->where('products.0.name', 'Desk Microphone')
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Desk Microphone')
             ->where('filters.q', 'microphone'));
 });
 
@@ -60,8 +60,8 @@ test('orders search filters by order number and customer', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('orders/index')
-            ->has('orders', 1)
-            ->where('orders.0.order_number', 'OP-THANDI-0001'));
+            ->has('orders.data', 1)
+            ->where('orders.data.0.order_number', 'OP-THANDI-0001'));
 });
 
 test('a shopper without a shop is sent to the storefront instead of the seller dashboard', function () {

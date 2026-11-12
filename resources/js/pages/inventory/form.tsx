@@ -1,5 +1,6 @@
 import { type FormEvent } from 'react';
 import { Link, useForm } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,12 +15,17 @@ type ProductForm = {
     type: string;
     description: string | null;
     list_price: string;
+    unit_cost: string | null;
     floor_price: string;
     stock_quantity: number;
     image_path: string | null;
+    features: string[];
+    specifications: SpecificationRow[];
     negotiation_enabled: boolean;
     max_rounds: number;
 };
+
+type SpecificationRow = { key: string; value: string };
 
 const CATEGORIES = [
     'Audio',
@@ -48,10 +54,13 @@ export default function InventoryForm({
         type: product?.type ?? 'physical',
         description: product?.description ?? '',
         list_price: product?.list_price ?? '',
+        unit_cost: product?.unit_cost ?? '',
         floor_price: product?.floor_price ?? '',
         stock_quantity: product?.stock_quantity ?? 1,
         image_path: product?.image_path ?? 'demo/audio.svg',
         image: null as File | null,
+        features: product?.features ?? [],
+        specifications: product?.specifications ?? [],
         negotiation_enabled: product?.negotiation_enabled ?? true,
         max_rounds: product?.max_rounds ?? 3,
     });
@@ -60,6 +69,22 @@ export default function InventoryForm({
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
+
+        form.transform((data) => ({
+            ...data,
+            features: data.features
+                .map((feature) => feature.trim())
+                .filter((feature) => feature !== ''),
+            specifications: data.specifications
+                .map((specification) => ({
+                    key: specification.key.trim(),
+                    value: specification.value.trim(),
+                }))
+                .filter(
+                    (specification) =>
+                        specification.key !== '' || specification.value !== '',
+                ),
+        }));
 
         if (product) {
             form.patch(`/inventory/${product.id}`, { forceFormData: true });
@@ -214,7 +239,207 @@ export default function InventoryForm({
                     />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <section className="space-y-3 rounded-md border border-border p-4">
+                    <div>
+                        <h2 className="text-sm font-semibold">
+                            Product features
+                        </h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            These appear on your product page and help the
+                            assistant answer buyer questions.
+                        </p>
+                    </div>
+                    {form.data.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                            <Label
+                                htmlFor={`feature-${index}`}
+                                className="sr-only"
+                            >
+                                Feature {index + 1}
+                            </Label>
+                            <Input
+                                id={`feature-${index}`}
+                                value={feature}
+                                maxLength={200}
+                                onChange={(event) => {
+                                    const features = [...form.data.features];
+                                    features[index] = event.target.value;
+                                    form.setData('features', features);
+                                }}
+                                placeholder="e.g. USB-C connection"
+                                className="h-11"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="size-11 shrink-0 p-0"
+                                aria-label={`Remove feature ${index + 1}`}
+                                onClick={() =>
+                                    form.setData(
+                                        'features',
+                                        form.data.features.filter(
+                                            (_, rowIndex) => rowIndex !== index,
+                                        ),
+                                    )
+                                }
+                            >
+                                <Trash2 aria-hidden="true" className="size-4" />
+                            </Button>
+                            {errors[`features.${index}`] && (
+                                <p className="text-xs text-destructive">
+                                    {errors[`features.${index}`]}
+                                </p>
+                            )}
+                        </div>
+                    ))}
+                    {errors.features && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {errors.features}
+                        </p>
+                    )}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11"
+                        disabled={form.data.features.length >= 20}
+                        onClick={() =>
+                            form.setData('features', [
+                                ...form.data.features,
+                                '',
+                            ])
+                        }
+                    >
+                        <Plus aria-hidden="true" className="size-4" />
+                        Add feature
+                    </Button>
+                </section>
+
+                <section className="space-y-3 rounded-md border border-border p-4">
+                    <div>
+                        <h2 className="text-sm font-semibold">
+                            Specifications
+                        </h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Add clear labels and values. The assistant only
+                            states specifications you provide here.
+                        </p>
+                    </div>
+                    {form.data.specifications.map((specification, index) => (
+                        <div
+                            key={index}
+                            className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]"
+                        >
+                            <div>
+                                <Label
+                                    htmlFor={`specification-key-${index}`}
+                                    className="sr-only"
+                                >
+                                    Specification name {index + 1}
+                                </Label>
+                                <Input
+                                    id={`specification-key-${index}`}
+                                    value={specification.key}
+                                    maxLength={80}
+                                    onChange={(event) => {
+                                        const specifications = [
+                                            ...form.data.specifications,
+                                        ];
+                                        specifications[index] = {
+                                            ...specification,
+                                            key: event.target.value,
+                                        };
+                                        form.setData(
+                                            'specifications',
+                                            specifications,
+                                        );
+                                    }}
+                                    placeholder="Specification name"
+                                    className="h-11"
+                                />
+                                {errors[`specifications.${index}.key`] && (
+                                    <p className="mt-1 text-xs text-destructive">
+                                        {errors[`specifications.${index}.key`]}
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <Label
+                                    htmlFor={`specification-value-${index}`}
+                                    className="sr-only"
+                                >
+                                    Specification value {index + 1}
+                                </Label>
+                                <Input
+                                    id={`specification-value-${index}`}
+                                    value={specification.value}
+                                    maxLength={200}
+                                    onChange={(event) => {
+                                        const specifications = [
+                                            ...form.data.specifications,
+                                        ];
+                                        specifications[index] = {
+                                            ...specification,
+                                            value: event.target.value,
+                                        };
+                                        form.setData(
+                                            'specifications',
+                                            specifications,
+                                        );
+                                    }}
+                                    placeholder="Specification value"
+                                    className="h-11"
+                                />
+                                {errors[`specifications.${index}.value`] && (
+                                    <p className="mt-1 text-xs text-destructive">
+                                        {
+                                            errors[
+                                                `specifications.${index}.value`
+                                            ]
+                                        }
+                                    </p>
+                                )}
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="size-11 shrink-0 p-0"
+                                aria-label={`Remove specification ${index + 1}`}
+                                onClick={() =>
+                                    form.setData(
+                                        'specifications',
+                                        form.data.specifications.filter(
+                                            (_, rowIndex) => rowIndex !== index,
+                                        ),
+                                    )
+                                }
+                            >
+                                <Trash2 aria-hidden="true" className="size-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    {errors.specifications && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {errors.specifications}
+                        </p>
+                    )}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11"
+                        disabled={form.data.specifications.length >= 20}
+                        onClick={() =>
+                            form.setData('specifications', [
+                                ...form.data.specifications,
+                                { key: '', value: '' },
+                            ])
+                        }
+                    >
+                        <Plus aria-hidden="true" className="size-4" />
+                        Add specification
+                    </Button>
+                </section>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                         <Label htmlFor="list_price">Listed price (USD)</Label>
                         <Input
@@ -230,6 +455,27 @@ export default function InventoryForm({
                         {errors.list_price && (
                             <p className="mt-1 text-xs text-destructive">
                                 {errors.list_price}
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <Label htmlFor="unit_cost">
+                            Unit cost (USD, private)
+                        </Label>
+                        <Input
+                            id="unit_cost"
+                            value={form.data.unit_cost}
+                            onChange={(e) =>
+                                form.setData('unit_cost', e.target.value)
+                            }
+                            inputMode="decimal"
+                            placeholder="Optional"
+                            className="mt-1 h-11"
+                        />
+                        {errors.unit_cost && (
+                            <p className="mt-1 text-xs text-destructive">
+                                {errors.unit_cost}
                             </p>
                         )}
                     </div>

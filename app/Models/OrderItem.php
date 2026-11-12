@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $sku
  * @property int $quantity
  * @property int $unit_price_cents
+ * @property int|null $unit_cost_cents
  * @property int $line_total_cents
  */
 #[Fillable([
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'sku',
     'quantity',
     'unit_price_cents',
+    'unit_cost_cents',
     'line_total_cents',
 ])]
 class OrderItem extends Model
@@ -49,5 +51,15 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the negotiated quote backing this line, when applicable.
+     *
+     * @return BelongsTo<Quote, $this>
+     */
+    public function quote(): BelongsTo
+    {
+        return $this->belongsTo(Quote::class);
     }
 }

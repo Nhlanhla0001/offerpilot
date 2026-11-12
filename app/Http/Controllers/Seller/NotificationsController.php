@@ -21,11 +21,14 @@ class NotificationsController extends Controller
             return redirect()->route('store.index');
         }
 
+        $user->unreadNotifications()->update(['read_at' => now()]);
+
         $notifications = $user->notifications()
             ->latest()
-            ->limit(50)
-            ->get()
-            ->map(fn ($notification): array => [
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn ($notification): array => [
                 'id' => $notification->id,
                 'title' => $notification->data['title'] ?? 'Notification',
                 'body' => $notification->data['body'] ?? '',
@@ -33,8 +36,6 @@ class NotificationsController extends Controller
                 'read' => $notification->read_at !== null,
                 'at' => $notification->created_at?->diffForHumans(),
             ]);
-
-        $user->unreadNotifications()->update(['read_at' => now()]);
 
         return Inertia::render('notifications/index', [
             'merchantName' => $user->merchant->name,

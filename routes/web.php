@@ -5,14 +5,17 @@ use App\Http\Controllers\Seller\InventoryController;
 use App\Http\Controllers\Seller\NotificationsController;
 use App\Http\Controllers\Seller\OffersController;
 use App\Http\Controllers\Seller\OrdersController;
+use App\Http\Controllers\Storefront\AssistantController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\CommerceCheckoutController;
 use App\Http\Controllers\Storefront\NegotiationController;
 use App\Http\Controllers\Storefront\ProductController;
+use App\Http\Controllers\Storefront\StorefrontEventController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::redirect('/', '/store')->name('home');
+Route::get('/', fn () => Inertia::render('welcome'))->name('home');
 
 Route::prefix('store')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('store.index');
@@ -30,6 +33,12 @@ Route::prefix('cart')->group(function () {
     Route::delete('items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
 });
 
+Route::post('store/assistant', AssistantController::class)
+    ->middleware('throttle:buyer-negotiate')
+    ->name('store.assistant');
+Route::post('store/events', [StorefrontEventController::class, 'store'])
+    ->middleware('throttle:buyer-negotiate')
+    ->name('store.events');
 Route::post('store/{product:sku}/negotiate', NegotiationController::class)
     ->middleware('throttle:buyer-negotiate')
     ->name('store.negotiate');

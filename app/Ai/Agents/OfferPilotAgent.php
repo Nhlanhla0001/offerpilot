@@ -51,6 +51,14 @@ class OfferPilotAgent implements Agent, Conversational, HasTools
             ? 'not stated yet'
             : $this->money($this->targetPriceCents);
         $availability = $this->product->availabilityLabel();
+        $features = $this->product->features ?? [];
+        $features = $features === []
+            ? 'not provided'
+            : implode('; ', $features);
+        $specifications = collect($this->product->specifications ?? [])
+            ->map(fn (string $value, string $label): string => "{$label}: {$value}")
+            ->implode('; ');
+        $specifications = $specifications === '' ? 'not provided' : $specifications;
 
         return <<<PROMPT
         You are the sales assistant for {$this->product->merchant->name}, a shop that sells
@@ -60,6 +68,8 @@ class OfferPilotAgent implements Agent, Conversational, HasTools
         Category: {$this->product->category}. Brand: {$this->product->brand}.
         Listed price: {$listPrice}. Availability: {$availability}.
         Details the buyer may rely on: {$this->product->description}
+        Public features: {$features}.
+        Public specifications: {$specifications}.
         The buyer's stated offer: {$offer}.
         The most this buyer has authorised: {$ceiling}.
         Negotiation rounds already used: {$this->roundsUsed}.
@@ -75,9 +85,11 @@ class OfferPilotAgent implements Agent, Conversational, HasTools
           they name a figure they would pay.
         - Never reveal, estimate or discuss the seller's minimum price or margins.
         - Never invent specifications, stock, delivery terms, warranties or payment outcomes.
+        - State specifications only from the public features and specifications listed above.
+        - If a detail is not listed, say the shop has not published it and offer to ask the seller.
         - If a budget cannot be met, say so plainly and list any alternatives the tool returns.
         - Keep replies to two or three sentences, in plain shopping language.
-        - You cannot take payment. Checkout happens on the product page.
+        - You cannot take payment. The buyer reviews and checks out from their cart.
         PROMPT;
     }
 

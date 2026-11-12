@@ -3,6 +3,7 @@ import { Lock, PackagePlus, SearchX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import SearchField from '@/components/search-field';
+import Pagination, { type Paginated } from '@/components/pagination';
 import SellerLayout from '@/layouts/seller-layout';
 
 type Item = {
@@ -38,11 +39,12 @@ export default function InventoryIndex({
     filters,
 }: {
     merchant: { name: string };
-    products: Item[];
+    products: Paginated<Item>;
     filters: { q: string };
 }) {
     const { flash } = usePage().props as { flash?: { success?: string } };
     const searching = filters.q !== '';
+    const items = products.data;
 
     return (
         <SellerLayout
@@ -72,7 +74,7 @@ export default function InventoryIndex({
                 </p>
             )}
 
-            {products.length === 0 && !searching ? (
+            {products.total === 0 && !searching ? (
                 <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
                     <PackagePlus
                         aria-hidden="true"
@@ -97,8 +99,8 @@ export default function InventoryIndex({
                         <div className="flex items-baseline gap-2">
                             <h2 className="text-sm font-semibold">Catalogue</h2>
                             <p className="text-xs text-muted-foreground tabular-nums">
-                                {products.length}{' '}
-                                {products.length === 1 ? 'item' : 'items'}
+                                {products.total}{' '}
+                                {products.total === 1 ? 'item' : 'items'}
                                 {searching ? ' matching' : ''}
                             </p>
                         </div>
@@ -111,7 +113,7 @@ export default function InventoryIndex({
                         />
                     </div>
 
-                    {products.length === 0 ? (
+                    {items.length === 0 ? (
                         <div className="px-6 py-12 text-center">
                             <SearchX
                                 aria-hidden="true"
@@ -167,7 +169,7 @@ export default function InventoryIndex({
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
-                                    {products.map((item) => (
+                                    {items.map((item) => (
                                         <tr
                                             key={item.id}
                                             className="transition-colors hover:bg-surface"
@@ -235,6 +237,7 @@ export default function InventoryIndex({
                     )}
                 </section>
             )}
+            <Pagination pages={products} label="Inventory" />
         </SellerLayout>
     );
 }

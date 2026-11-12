@@ -21,8 +21,11 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $category
  * @property string $sku
  * @property string|null $description
+ * @property array<int, string>|null $features
+ * @property array<string, string>|null $specifications
  * @property string|null $image_path
  * @property int $list_price_cents
+ * @property int|null $unit_cost_cents
  * @property int $stock_quantity
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -37,14 +40,30 @@ use Illuminate\Support\Facades\Storage;
     'category',
     'sku',
     'description',
+    'features',
+    'specifications',
     'image_path',
     'list_price_cents',
+    'unit_cost_cents',
     'stock_quantity',
 ])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'features' => 'array',
+            'specifications' => 'array',
+        ];
+    }
 
     /**
      * The fallback artwork used when a product has no image.
